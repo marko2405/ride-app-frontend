@@ -1,19 +1,30 @@
 import { http } from "../http";
 
+export type Role = "USER" | "DRIVER" | "ADMIN";
+
 export interface LoginRequest {
   email: string;
   password: string;
 }
 
 export interface RegisterRequest {
+  firstName: string;
+  lastName: string;
   email: string;
   username: string;
   password: string;
-  desiredRole: string;
+  role: Role;
 }
 
 export interface AuthResponse {
   token: string;
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  username: string;
+  role: string;
+  enabled: boolean;
 }
 
 export const login = async (data: LoginRequest) => {

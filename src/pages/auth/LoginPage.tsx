@@ -5,6 +5,7 @@ import { AxiosError } from "axios";
 import AuthLayout from "../../components/AuthLayout";
 import PasswordInput from "../../components/PasswordInput";
 import { login, type LoginRequest } from "../../api/auth/auth";
+import { saveAuthData } from "../../utils/auth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginRequest) => {
     try {
       const response = await login(data);
-      localStorage.setItem("token", response.token);
+      saveAuthData(response);
       navigate("/");
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;

@@ -1,29 +1,52 @@
-import { Box, Button, Container, Typography } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import {
+  Alert,
+  Card,
+  CardContent,
+  CircularProgress,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { useUser } from "../context/UserContext";
 
 export default function HomePage() {
-  const navigate = useNavigate();
+  const { user, loading, error } = useUser();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+  if (loading) {
+    return <CircularProgress />;
+  }
+
+  if (error) {
+    return <Alert severity="error">{error}</Alert>;
+  }
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ py: 8 }}>
-        <Typography variant="h4" mb={2}>
-          Home Page
-        </Typography>
+    <Stack spacing={3}>
+      <Typography variant="h4" fontWeight={700}>
+        Dashboard
+      </Typography>
 
-        <Typography variant="body1" mb={4}>
-          You are logged in successfully.
-        </Typography>
-
-        <Button variant="contained" onClick={handleLogout}>
-          Logout
-        </Button>
-      </Box>
-    </Container>
+      <Card>
+        <CardContent>
+          <Stack spacing={1}>
+            <Typography variant="h6">Logged in user</Typography>
+            <Typography>
+              <strong>Name:</strong> {user?.firstName} {user?.lastName}
+            </Typography>
+            <Typography>
+              <strong>Email:</strong> {user?.email}
+            </Typography>
+            <Typography>
+              <strong>Username:</strong> {user?.username}
+            </Typography>
+            <Typography>
+              <strong>Role:</strong> {user?.role}
+            </Typography>
+            <Typography>
+              <strong>Enabled:</strong> {String(user?.enabled)}
+            </Typography>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Stack>
   );
 }

@@ -5,6 +5,7 @@ import { AxiosError } from "axios";
 import AuthLayout from "../../components/AuthLayout";
 import PasswordField from "../../components/PasswordInput";
 import { registerUser, type RegisterRequest } from "../../api/auth/auth";
+import { saveAuthData } from "../../utils/auth";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -16,17 +17,19 @@ export default function RegisterPage() {
     setError,
   } = useForm<RegisterRequest>({
     defaultValues: {
+      firstName: "",
+      lastName: "",
       email: "",
       username: "",
       password: "",
-      desiredRole: "PASSENGER",
+      role: "USER",
     },
   });
 
   const onSubmit = async (data: RegisterRequest) => {
     try {
       const response = await registerUser(data);
-      localStorage.setItem("token", response.token);
+      saveAuthData(response);
       navigate("/");
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
@@ -44,6 +47,34 @@ export default function RegisterPage() {
           {errors.root?.message && (
             <Alert severity="error">{errors.root.message}</Alert>
           )}
+
+          <TextField
+            label="First name"
+            fullWidth
+            {...register("firstName", {
+              required: "First name is required.",
+              minLength: {
+                value: 2,
+                message: "First name must be at least 2 characters long.",
+              },
+            })}
+            error={!!errors.firstName}
+            helperText={errors.firstName?.message}
+          />
+
+          <TextField
+            label="Last name"
+            fullWidth
+            {...register("lastName", {
+              required: "Last name is required.",
+              minLength: {
+                value: 2,
+                message: "Last name must be at least 2 characters long.",
+              },
+            })}
+            error={!!errors.lastName}
+            helperText={errors.lastName?.message}
+          />
 
           <TextField
             label="Email"
@@ -91,14 +122,14 @@ export default function RegisterPage() {
             select
             label="Role"
             fullWidth
-            defaultValue="PASSENGER"
-            {...register("desiredRole", {
+            defaultValue="USER"
+            {...register("role", {
               required: "Role is required.",
             })}
-            error={!!errors.desiredRole}
-            helperText={errors.desiredRole?.message}
+            error={!!errors.role}
+            helperText={errors.role?.message}
           >
-            <MenuItem value="PASSENGER">Passenger</MenuItem>
+            <MenuItem value="USER">Passenger</MenuItem>
             <MenuItem value="DRIVER">Driver</MenuItem>
           </TextField>
 
