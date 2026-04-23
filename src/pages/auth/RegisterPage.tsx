@@ -5,10 +5,12 @@ import { AxiosError } from "axios";
 import AuthLayout from "../../components/AuthLayout";
 import PasswordField from "../../components/PasswordInput";
 import { registerUser, type RegisterRequest } from "../../api/auth/auth";
+import { useUser } from "../../context/UserContext";
 import { saveAuthData } from "../../utils/auth";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { setAuthenticatedUser, refreshUser } = useUser();
 
   const {
     register,
@@ -30,6 +32,8 @@ export default function RegisterPage() {
     try {
       const response = await registerUser(data);
       saveAuthData(response);
+      setAuthenticatedUser(response);
+      void refreshUser();
       navigate("/");
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;

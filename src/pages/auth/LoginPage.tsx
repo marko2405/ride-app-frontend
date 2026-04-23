@@ -5,10 +5,12 @@ import { AxiosError } from "axios";
 import AuthLayout from "../../components/AuthLayout";
 import PasswordInput from "../../components/PasswordInput";
 import { login, type LoginRequest } from "../../api/auth/auth";
+import { useUser } from "../../context/UserContext";
 import { saveAuthData } from "../../utils/auth";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { setAuthenticatedUser, refreshUser } = useUser();
 
   const {
     register,
@@ -26,6 +28,8 @@ export default function LoginPage() {
     try {
       const response = await login(data);
       saveAuthData(response);
+      setAuthenticatedUser(response);
+      void refreshUser();
       navigate("/");
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;

@@ -1,4 +1,4 @@
-import { Box, Paper, Typography } from "@mui/material";
+import { Box, Paper, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import authImage from "../assets/auth-ride.png";
 
@@ -62,11 +62,45 @@ export default function AuthLayout({
       <Box
         sx={{
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           p: { xs: 2, sm: 4, md: 6 },
         }}
       >
+        <Stack
+          spacing={0.5}
+          sx={{
+            width: "100%",
+            maxWidth: 520,
+            mb: 3,
+          }}
+        >
+          <Typography
+            variant="h2"
+            fontWeight={800}
+            sx={{
+              color: "white",
+              fontSize: { xs: "2.4rem", sm: "3.25rem" },
+              lineHeight: 1,
+              letterSpacing: -1.2,
+            }}
+          >
+            Ride App
+          </Typography>
+
+          <Typography
+            variant="h6"
+            sx={{
+              color: "rgba(255,255,255,0.78)",
+              fontWeight: 500,
+              maxWidth: 360,
+            }}
+          >
+            Fast rides, simple booking.
+          </Typography>
+        </Stack>
+
         <Paper
           elevation={0}
           sx={{
