@@ -1,17 +1,20 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import authImage from "../assets/auth-ride.png";
+import logoImage from "../assets/logo.png";
 
 type AuthLayoutProps = {
   title: string;
   subtitle: string;
   children: ReactNode;
+  contentMaxWidth?: number;
 };
 
 export default function AuthLayout({
   title,
   subtitle,
   children,
+  contentMaxWidth = 520,
 }: AuthLayoutProps) {
   return (
     <Box
@@ -72,22 +75,37 @@ export default function AuthLayout({
           spacing={0.5}
           sx={{
             width: "100%",
-            maxWidth: 520,
+            maxWidth: contentMaxWidth,
             mb: 3,
           }}
         >
-          <Typography
-            variant="h2"
-            fontWeight={800}
-            sx={{
-              color: "white",
-              fontSize: { xs: "2.4rem", sm: "3.25rem" },
-              lineHeight: 1,
-              letterSpacing: -1.2,
-            }}
-          >
-            Ride App
-          </Typography>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              component="img"
+              src={logoImage}
+              alt="Ride App logo"
+              sx={{
+                width: 78,
+                height: 78,
+                objectFit: "contain",
+                borderRadius: 2,
+                backgroundColor: "rgba(255,255,255,0.08)",
+                p: 1,
+              }}
+            />
+            <Typography
+              variant="h2"
+              fontWeight={800}
+              sx={{
+                color: "white",
+                fontSize: { xs: "2.4rem", sm: "3.25rem" },
+                lineHeight: 1,
+                letterSpacing: -1.2,
+              }}
+            >
+              Ride App
+            </Typography>
+          </Stack>
 
           <Typography
             variant="h6"
@@ -105,7 +123,7 @@ export default function AuthLayout({
           elevation={0}
           sx={{
             width: "100%",
-            maxWidth: 520,
+            maxWidth: contentMaxWidth,
             p: { xs: 3, sm: 4.5 },
             borderRadius: 5,
             background: "rgba(255, 255, 255, 0.96)",

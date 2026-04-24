@@ -1,5 +1,9 @@
-import { AxiosError } from "axios";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import DirectionsCarFilledRoundedIcon from "@mui/icons-material/DirectionsCarFilledRounded";
+import PaymentsRoundedIcon from "@mui/icons-material/PaymentsRounded";
+import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
+import StarRoundedIcon from "@mui/icons-material/StarRounded";
+import { AxiosError } from "axios";
 import {
   Alert,
   Box,
@@ -11,6 +15,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMyDriverRides, getMyRides } from "../api/rides/rides";
@@ -18,7 +23,14 @@ import RideStatusChip from "../components/rides/RideStatusChip";
 import { useUser } from "../context/UserContext";
 import UserRatingSummaryCard from "../modules/ratings/components/UserRatingSummaryCard";
 import type { RideResponse } from "../types/ride";
-import { formatDateTime, formatPrice } from "../utils/rideFormatters";
+import {
+  formatDateTime,
+  formatDistance,
+  formatDuration,
+  formatMoney,
+  formatRating,
+  formatVehicleClass,
+} from "../utils/rideFormatters";
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   const axiosError = error as AxiosError<{ message?: string }>;
@@ -30,6 +42,50 @@ const activeStatusRank: Record<string, number> = {
   ACCEPTED: 1,
   REQUESTED: 2,
 };
+
+type StatPanelProps = {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  accent: string;
+};
+
+function StatPanel({ label, value, icon, accent }: StatPanelProps) {
+  return (
+    <Card
+      sx={{
+        borderRadius: 2,
+        height: "100%",
+        border: "1px solid rgba(148, 163, 184, 0.16)",
+        boxShadow: "0 14px 28px rgba(15, 23, 42, 0.05)",
+      }}
+    >
+      <CardContent sx={{ p: 2.5 }}>
+        <Stack spacing={1.25}>
+          <Box
+            sx={{
+              width: 42,
+              height: 42,
+              borderRadius: 3,
+              display: "grid",
+              placeItems: "center",
+              backgroundColor: alpha(accent, 0.1),
+              color: accent,
+            }}
+          >
+            {icon}
+          </Box>
+          <Typography variant="body2" color="text.secondary">
+            {label}
+          </Typography>
+          <Typography variant="h6" fontWeight={800}>
+            {value}
+          </Typography>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -51,8 +107,8 @@ export default function HomePage() {
         const response =
           user.role === "DRIVER" ? await getMyDriverRides() : await getMyRides();
         setRides(response);
-      } catch (error) {
-        setRidesError(getErrorMessage(error, "Failed to load current ride."));
+      } catch (loadError) {
+        setRidesError(getErrorMessage(loadError, "Failed to load ride activity."));
       } finally {
         setRidesLoading(false);
       }
@@ -78,6 +134,24 @@ export default function HomePage() {
       })[0];
   }, [rides]);
 
+  const completedRidesCount = useMemo(() => {
+    return rides.filter((ride) => ride.status === "COMPLETED").length;
+  }, [rides]);
+
+  const latestRideCounterparty = useMemo(() => {
+    if (!currentRide) {
+      return user?.role === "DRIVER"
+        ? "No passenger assigned"
+        : "Waiting for driver";
+    }
+
+    if (user?.role === "DRIVER") {
+      return currentRide.passengerInfo.fullName;
+    }
+
+    return currentRide.driverInfo?.fullName ?? "Waiting for driver";
+  }, [currentRide, user?.role]);
+
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 12 }}>
@@ -94,198 +168,330 @@ export default function HomePage() {
     <Stack spacing={3.5}>
       <Card
         sx={{
-          borderRadius: 6,
+          borderRadius: 3,
           overflow: "hidden",
           background:
-            "linear-gradient(135deg, #0f172a 0%, #1d4ed8 45%, #312e81 100%)",
+            "linear-gradient(135deg, #0f172a 0%, #1d4ed8 45%, #0f766e 100%)",
           color: "white",
-          boxShadow: "0 25px 60px rgba(15, 23, 42, 0.18)",
+          boxShadow: "0 26px 58px rgba(15, 23, 42, 0.16)",
         }}
       >
-        <CardContent sx={{ p: { xs: 3, md: 5 } }}>
-          <Stack spacing={2.5}>
-            <Typography variant="overline" sx={{ opacity: 0.72, letterSpacing: 1.6 }}>
-              {user?.role === "DRIVER" ? "Driver Dashboard" : "Passenger Dashboard"}
-            </Typography>
-            <Typography variant="h3" fontWeight={800} sx={{ maxWidth: 700 }}>
-              {user?.role === "DRIVER"
-                ? `Welcome back, ${user?.firstName}. Stay on top of assigned rides and driver details.`
-                : `Welcome back, ${user?.firstName}. Book a ride in a few taps and keep every trip in one place.`}
-            </Typography>
-            <Typography sx={{ maxWidth: 680, opacity: 0.8 }}>
-              {user?.role === "DRIVER"
-                ? "Use your workspace to monitor ride history and keep your driver profile current."
-                : "Search locations with Google autocomplete, compare ride classes instantly, and confirm rides with the existing backend flow."}
-            </Typography>
-
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              {user?.role === "DRIVER" ? (
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  endIcon={<ArrowForwardRoundedIcon />}
-                  onClick={() => navigate("/driver/rides/available")}
-                >
-                  View available rides
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  endIcon={<ArrowForwardRoundedIcon />}
-                  onClick={() => navigate("/rides/new")}
-                >
-                  Book a ride
-                </Button>
-              )}
-              <Button
-                variant="outlined"
-                sx={{ color: "white", borderColor: "rgba(255,255,255,0.38)" }}
-                onClick={() => navigate(ridesPath)}
-              >
-                Open my rides
-              </Button>
-            </Stack>
-          </Stack>
-        </CardContent>
-      </Card>
-
-      <Card sx={{ borderRadius: 1 }}>
-        <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            justifyContent="space-between"
-            spacing={2.5}
-          >
-            <Stack spacing={1.25}>
-              <Typography variant="h6" fontWeight={700}>
-                Current ride
-              </Typography>
-              {ridesLoading && (
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <CircularProgress size={20} />
-                  <Typography color="text.secondary">
-                    Loading your latest ride activity...
-                  </Typography>
-                </Stack>
-              )}
-              {!ridesLoading && ridesError && (
-                <Alert severity="error">{ridesError}</Alert>
-              )}
-              {!ridesLoading && !ridesError && currentRide && (
-                <Stack spacing={1}>
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Typography variant="h5" fontWeight={800}>
-                      Ride #{currentRide.id}
-                    </Typography>
-                    <RideStatusChip status={currentRide.status} />
-                  </Stack>
-                  <Typography color="text.secondary">
-                    Scheduled for {formatDateTime(currentRide.scheduledFor)} ·{" "}
-                    {formatPrice(currentRide.totalPrice, currentRide.currency)}
-                  </Typography>
-                </Stack>
-              )}
-              {!ridesLoading && !ridesError && !currentRide && (
-                <Typography color="text.secondary">
+        <CardContent sx={{ p: { xs: 3, md: 4.5 } }}>
+          <Grid container spacing={3} alignItems="center">
+            <Grid size={{ xs: 12, lg: 8 }}>
+              <Stack spacing={1.5}>
+                <Typography variant="overline" sx={{ opacity: 0.74, letterSpacing: 1.6 }}>
+                  {user?.role === "DRIVER" ? "Driver Dashboard" : "Passenger Dashboard"}
+                </Typography>
+                <Typography variant="h3" fontWeight={800} sx={{ maxWidth: 760 }}>
                   {user?.role === "DRIVER"
-                    ? "You do not have an active assigned ride right now."
-                    : "You do not have an active ride right now."}
+                    ? `Welcome back, ${user?.firstName}. Keep an eye on assigned trips and incoming requests.`
+                    : `Welcome back, ${user?.firstName}. Your next trip and account activity are all in one place.`}
                 </Typography>
-              )}
-            </Stack>
+                <Typography sx={{ maxWidth: 720, opacity: 0.84 }}>
+                  {user?.role === "DRIVER"
+                    ? "See your current ride, check passenger details when available, and move quickly between assigned and available requests."
+                    : "Check your current trip, review recent ride activity, and jump back into booking whenever you need a ride."}
+                </Typography>
+              </Stack>
+            </Grid>
 
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={1.5}
-              alignItems={{ xs: "stretch", sm: "center" }}
-            >
-              {currentRide ? (
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <Stack spacing={1.5}>
                 <Button
                   variant="contained"
-                  onClick={() => navigate(`/rides/${currentRide.id}`)}
+                  color="secondary"
+                  endIcon={<ArrowForwardRoundedIcon />}
+                  onClick={() =>
+                    navigate(user?.role === "DRIVER" ? "/driver/rides/available" : "/rides/new")
+                  }
+                  sx={{ py: 1.4 }}
                 >
-                  View details
+                  {user?.role === "DRIVER" ? "View available rides" : "Book a ride"}
                 </Button>
-              ) : user?.role === "DRIVER" ? (
                 <Button
-                  variant="contained"
-                  onClick={() => navigate("/driver/rides/available")}
+                  variant="outlined"
+                  sx={{ color: "white", borderColor: "rgba(255,255,255,0.35)", py: 1.4 }}
+                  onClick={() => navigate(ridesPath)}
                 >
-                  View available rides
+                  Open my rides
                 </Button>
-              ) : (
-                <Button variant="contained" onClick={() => navigate("/rides/new")}>
-                  Book a ride
-                </Button>
-              )}
-              <Button variant="outlined" onClick={() => navigate(ridesPath)}>
-                Open my rides
-              </Button>
-            </Stack>
-          </Stack>
+              </Stack>
+            </Grid>
+          </Grid>
         </CardContent>
       </Card>
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Card sx={{ borderRadius: 5, height: "100%" }}>
-            <CardContent sx={{ p: 3 }}>
-              <Stack spacing={1.75}>
-                <Typography variant="h6" fontWeight={700}>
-                  Account snapshot
-                </Typography>
-                <Typography>
-                  <strong>Name:</strong> {user?.firstName} {user?.lastName}
-                </Typography>
-                <Typography>
-                  <strong>Email:</strong> {user?.email}
-                </Typography>
-                <Typography>
-                  <strong>Username:</strong> {user?.username}
-                </Typography>
-                <Typography>
-                  <strong>Role:</strong> {user?.role}
-                </Typography>
+      <Grid container spacing={2.5}>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <StatPanel
+            label="Current ride"
+            value={currentRide ? `#${currentRide.id}` : "No active ride"}
+            icon={<DirectionsCarFilledRoundedIcon fontSize="small" />}
+            accent="#2563eb"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <StatPanel
+            label={user?.role === "DRIVER" ? "Current passenger" : "Current driver"}
+            value={latestRideCounterparty}
+            icon={<StarRoundedIcon fontSize="small" />}
+            accent="#7c3aed"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <StatPanel
+            label="Completed rides"
+            value={`${completedRidesCount}`}
+            icon={<ScheduleRoundedIcon fontSize="small" />}
+            accent="#0f766e"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <StatPanel
+            label="Account role"
+            value={user?.role ?? "-"}
+            icon={<PaymentsRoundedIcon fontSize="small" />}
+            accent="#ea580c"
+          />
+        </Grid>
+      </Grid>
+
+      {ridesError && <Alert severity="error">{ridesError}</Alert>}
+
+      <Grid container spacing={3} alignItems="stretch">
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Card
+            sx={{
+              borderRadius: 2,
+              height: "100%",
+              border: "1px solid rgba(148, 163, 184, 0.16)",
+              boxShadow: "0 18px 38px rgba(15, 23, 42, 0.06)",
+            }}
+          >
+            <CardContent sx={{ p: { xs: 3, md: 4 }, height: "100%" }}>
+              <Stack spacing={2.75} sx={{ height: "100%" }}>
+                <Stack spacing={0.75}>
+                  <Typography variant="h6" fontWeight={800}>
+                    Current ride overview
+                  </Typography>
+                  <Typography color="text.secondary">
+                    The most relevant active ride is shown here when one exists.
+                  </Typography>
+                </Stack>
+
+                {ridesLoading ? (
+                  <Stack direction="row" spacing={1.5} alignItems="center" py={4}>
+                    <CircularProgress size={22} />
+                    <Typography color="text.secondary">
+                      Loading your ride activity...
+                    </Typography>
+                  </Stack>
+                ) : currentRide ? (
+                  <Grid container spacing={2.5}>
+                    <Grid size={{ xs: 12, md: 7 }}>
+                      <Stack spacing={2}>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Typography variant="h4" fontWeight={800}>
+                            Ride #{currentRide.id}
+                          </Typography>
+                          <RideStatusChip status={currentRide.status} />
+                        </Stack>
+                        <Typography color="text.secondary">
+                          {user?.role === "DRIVER"
+                            ? `Passenger: ${currentRide.passengerInfo.fullName}`
+                            : currentRide.driverInfo
+                              ? `Driver: ${currentRide.driverInfo.fullName}`
+                              : "Driver has not been assigned yet."}
+                        </Typography>
+                        <Grid container spacing={2}>
+                          <Grid size={{ xs: 12, sm: 6 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Vehicle class
+                            </Typography>
+                            <Typography fontWeight={700}>
+                              {formatVehicleClass(currentRide.vehicleClass)}
+                            </Typography>
+                          </Grid>
+                          <Grid size={{ xs: 12, sm: 6 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Total price
+                            </Typography>
+                            <Typography fontWeight={700}>
+                              {formatMoney(currentRide.totalPrice, currentRide.currency)}
+                            </Typography>
+                          </Grid>
+                          <Grid size={{ xs: 12, sm: 6 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Distance
+                            </Typography>
+                            <Typography fontWeight={700}>
+                              {formatDistance(currentRide.distanceMeters)}
+                            </Typography>
+                          </Grid>
+                          <Grid size={{ xs: 12, sm: 6 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Duration
+                            </Typography>
+                            <Typography fontWeight={700}>
+                              {formatDuration(currentRide.durationSeconds)}
+                            </Typography>
+                          </Grid>
+                          <Grid size={{ xs: 12 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Scheduled for
+                            </Typography>
+                            <Typography fontWeight={700}>
+                              {formatDateTime(currentRide.scheduledFor)}
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                      </Stack>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, md: 5 }}>
+                      <Box
+                        sx={{
+                          height: "100%",
+                          p: 2.5,
+                          borderRadius: 4,
+                          background:
+                            "linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(255,255,255,1) 100%)",
+                          border: "1px solid rgba(148, 163, 184, 0.14)",
+                        }}
+                      >
+                        <Stack spacing={1.5}>
+                          <Typography fontWeight={800}>
+                            {user?.role === "DRIVER" ? "Passenger snapshot" : "Driver snapshot"}
+                          </Typography>
+                          <Typography color="text.secondary">
+                            {user?.role === "DRIVER"
+                              ? formatRating(
+                                  currentRide.passengerInfo.averageRating,
+                                  currentRide.passengerInfo.totalRatings,
+                                )
+                              : currentRide.driverInfo
+                                ? formatRating(
+                                    currentRide.driverInfo.averageRating,
+                                    currentRide.driverInfo.totalRatings,
+                                  )
+                                : "No driver details yet"}
+                          </Typography>
+                          <Button
+                            variant="contained"
+                            onClick={() => navigate(`/rides/${currentRide.id}`)}
+                            sx={{ alignSelf: "flex-start", mt: 1 }}
+                          >
+                            View details
+                          </Button>
+                        </Stack>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                ) : (
+                  <Stack spacing={1.5}>
+                    <Typography color="text.secondary">
+                      {user?.role === "DRIVER"
+                        ? "You do not have an active assigned ride right now."
+                        : "You do not have an active ride right now."}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      onClick={() =>
+                        navigate(user?.role === "DRIVER" ? "/driver/rides/available" : "/rides/new")
+                      }
+                      sx={{ alignSelf: "flex-start" }}
+                    >
+                      {user?.role === "DRIVER" ? "View available rides" : "Book a ride"}
+                    </Button>
+                  </Stack>
+                )}
               </Stack>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           {user && <UserRatingSummaryCard userId={user.id} />}
         </Grid>
 
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Card sx={{ borderRadius: 5, height: "100%" }}>
-            <CardContent sx={{ p: 3 }}>
-              <Stack spacing={1.75}>
-                <Typography variant="h6" fontWeight={700}>
-                  Booking flow
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card
+            sx={{
+              borderRadius: 2,
+              height: "100%",
+              border: "1px solid rgba(148, 163, 184, 0.16)",
+              boxShadow: "0 18px 38px rgba(15, 23, 42, 0.06)",
+            }}
+          >
+            <CardContent sx={{ p: 3.5 }}>
+              <Stack spacing={1.5}>
+                <Typography variant="h6" fontWeight={800}>
+                  Account snapshot
                 </Typography>
                 <Typography color="text.secondary">
-                  Google Places autocomplete now handles location search and
-                  resolves coordinates automatically before quote requests.
+                  Basic account information currently available in the app.
                 </Typography>
-                <Button variant="text" onClick={() => navigate("/ratings")}>
-                  View all ratings
-                </Button>
+                <Stack spacing={1.25}>
+                  {[
+                    {
+                      label: "Name",
+                      value: `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim(),
+                    },
+                    { label: "Email", value: user?.email ?? "-" },
+                    { label: "Username", value: user?.username ?? "-" },
+                    { label: "Role", value: user?.role ?? "-" },
+                  ].map((item) => (
+                    <Box
+                      key={item.label}
+                      sx={{
+                        px: 2,
+                        py: 1.5,
+                        borderRadius: 2,
+                        backgroundColor: "rgba(248, 250, 252, 0.95)",
+                        border: "1px solid rgba(148, 163, 184, 0.14)",
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        {item.label}
+                      </Typography>
+                      <Typography fontWeight={700}>{item.value}</Typography>
+                    </Box>
+                  ))}
+                </Stack>
               </Stack>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Card sx={{ borderRadius: 5, height: "100%" }}>
-            <CardContent sx={{ p: 3 }}>
-              <Stack spacing={1.75}>
-                <Typography variant="h6" fontWeight={700}>
-                  Ride history
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card
+            sx={{
+              borderRadius: 2,
+              height: "100%",
+              border: "1px solid rgba(148, 163, 184, 0.16)",
+              boxShadow: "0 18px 38px rgba(15, 23, 42, 0.06)",
+            }}
+          >
+            <CardContent sx={{ p: 3.5 }}>
+              <Stack spacing={1.5}>
+                <Typography variant="h6" fontWeight={800}>
+                  Quick actions
                 </Typography>
                 <Typography color="text.secondary">
-                  Visit My Rides to review statuses, prices, schedule times, and
-                  detailed backend responses for each trip.
+                  Jump directly to the area you are most likely to need next.
                 </Typography>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+                  <Button variant="contained" onClick={() => navigate(ridesPath)}>
+                    Open my rides
+                  </Button>
+                  <Button variant="outlined" onClick={() => navigate("/profile")}>
+                    Open profile
+                  </Button>
+                  <Button variant="text" onClick={() => navigate("/ratings")}>
+                    View ratings
+                  </Button>
+                </Stack>
               </Stack>
             </CardContent>
           </Card>

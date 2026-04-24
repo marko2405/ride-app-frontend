@@ -1,6 +1,8 @@
 import { http } from "../http";
 
 export type Role = "USER" | "DRIVER" | "ADMIN";
+export type RegisterRole = "USER" | "DRIVER";
+export type VehicleClass = "ECONOMIC" | "BUSINESS" | "COMFORT";
 
 export interface LoginRequest {
   email: string;
@@ -13,7 +15,15 @@ export interface RegisterRequest {
   email: string;
   username: string;
   password: string;
-  role: Role;
+  role: RegisterRole;
+  licenseNumber?: string | null;
+  yearsOfExperience?: number | null;
+  vehicleClass?: VehicleClass;
+  carBrand?: string;
+  carModel?: string;
+  carColor?: string;
+  plateNumber?: string;
+  seats?: number;
 }
 
 export interface AuthResponse {

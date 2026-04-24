@@ -1,15 +1,28 @@
+import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
+import DirectionsCarFilledRoundedIcon from "@mui/icons-material/DirectionsCarFilledRounded";
+import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
+import PaymentsRoundedIcon from "@mui/icons-material/PaymentsRounded";
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
+import RouteRoundedIcon from "@mui/icons-material/RouteRounded";
+import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import { AxiosError } from "axios";
 import {
   Alert,
+  Avatar,
+  Box,
   Button,
   Card,
   CardContent,
   CircularProgress,
   Divider,
   Grid,
+  IconButton,
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -19,16 +32,21 @@ import {
   getRideById,
   startRide,
 } from "../../api/rides/rides";
-import RideSummaryCard from "../../components/rides/RideSummaryCard";
+import RideStatusChip from "../../components/rides/RideStatusChip";
 import { useUser } from "../../context/UserContext";
 import RideRatingsCard from "../../modules/ratings/components/RideRatingsCard";
-import type { RideResponse } from "../../types/ride";
+import type {
+  RidePersonInfo,
+  RideResponse,
+  RideVehicleInfo,
+} from "../../types/ride";
 import {
-  formatCoordinate,
   formatDateTime,
-  formatDistanceKm,
+  formatDistance,
   formatDuration,
-  formatPrice,
+  formatMoney,
+  formatRating,
+  formatVehicleClass,
 } from "../../utils/rideFormatters";
 
 const getErrorMessage = (error: unknown, fallback: string) => {
@@ -36,19 +54,229 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return axiosError.response?.data?.message || fallback;
 };
 
-type DetailRowProps = {
+type MetricCardProps = {
+  icon: React.ReactNode;
   label: string;
-  value: string | number;
+  value: string;
+  accent: string;
 };
 
-function DetailRow({ label, value }: DetailRowProps) {
+function MetricCard({ icon, label, value, accent }: MetricCardProps) {
   return (
-    <Stack spacing={0.5}>
-      <Typography variant="body2" color="text.secondary">
-        {label}
-      </Typography>
-      <Typography fontWeight={600}>{value}</Typography>
+    <Card
+      sx={{
+        borderRadius: 4,
+        height: "100%",
+        border: "1px solid rgba(148, 163, 184, 0.16)",
+        boxShadow: "0 14px 28px rgba(15, 23, 42, 0.05)",
+      }}
+    >
+      <CardContent sx={{ p: 2.5 }}>
+        <Stack spacing={1.5}>
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: 3,
+              display: "grid",
+              placeItems: "center",
+              backgroundColor: alpha(accent, 0.1),
+              color: accent,
+            }}
+          >
+            {icon}
+          </Box>
+          <Typography variant="body2" color="text.secondary">
+            {label}
+          </Typography>
+          <Typography variant="h6" fontWeight={800}>
+            {value}
+          </Typography>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
+type SummaryRowProps = {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+};
+
+function SummaryRow({ icon, label, value }: SummaryRowProps) {
+  return (
+    <Stack direction="row" spacing={1.5} alignItems="flex-start">
+      <Box
+        sx={{
+          width: 38,
+          height: 38,
+          borderRadius: 2.5,
+          display: "grid",
+          placeItems: "center",
+          backgroundColor: "rgba(99, 102, 241, 0.08)",
+          color: "#4f46e5",
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </Box>
+      <Stack spacing={0.25}>
+        <Typography variant="body2" color="text.secondary">
+          {label}
+        </Typography>
+        <Typography fontWeight={700}>{value}</Typography>
+      </Stack>
     </Stack>
+  );
+}
+
+type PersonCardProps = {
+  title: string;
+  person: RidePersonInfo;
+  tone: "passenger" | "driver";
+};
+
+function PersonCard({ title, person, tone }: PersonCardProps) {
+  const initials = person.fullName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const accent = tone === "passenger" ? "#7c3aed" : "#2563eb";
+
+  return (
+    <Card
+      sx={{
+        borderRadius: 5,
+        height: "100%",
+        border: "1px solid rgba(148, 163, 184, 0.18)",
+        boxShadow: "0 18px 38px rgba(15, 23, 42, 0.06)",
+      }}
+    >
+      <CardContent sx={{ p: { xs: 3, md: 3.5 }, height: "100%" }}>
+        <Stack spacing={2.5}>
+          <Typography variant="h6" fontWeight={800}>
+            {title}
+          </Typography>
+
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Avatar
+              sx={{
+                width: 62,
+                height: 62,
+                bgcolor: alpha(accent, 0.1),
+                color: accent,
+                fontWeight: 800,
+                fontSize: 22,
+              }}
+            >
+              {initials || <PersonRoundedIcon />}
+            </Avatar>
+            <Stack spacing={0.5}>
+              <Typography variant="h5" fontWeight={800}>
+                {person.fullName}
+              </Typography>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <StarRoundedIcon sx={{ color: "#f59e0b", fontSize: 20 }} />
+                <Typography color="text.secondary" fontWeight={600}>
+                  {formatRating(person.averageRating, person.totalRatings)}
+                </Typography>
+              </Stack>
+            </Stack>
+          </Stack>
+
+          <Box
+            sx={{
+              p: 2.25,
+              borderRadius: 4,
+              background: `linear-gradient(135deg, ${alpha(accent, 0.08)} 0%, rgba(255,255,255,1) 100%)`,
+              border: "1px solid rgba(148, 163, 184, 0.14)",
+            }}
+          >
+            <Stack spacing={1.5}>
+              <SummaryRow
+                icon={<StarRoundedIcon fontSize="small" />}
+                label="Rating summary"
+                value={formatRating(person.averageRating, person.totalRatings)}
+              />
+              <SummaryRow
+                icon={<PersonRoundedIcon fontSize="small" />}
+                label="Total ratings"
+                value={`${person.totalRatings}`}
+              />
+            </Stack>
+          </Box>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
+function VehicleCard({ vehicle }: { vehicle: RideVehicleInfo }) {
+  return (
+    <Card
+      sx={{
+        borderRadius: 5,
+        height: "100%",
+        border: "1px solid rgba(148, 163, 184, 0.18)",
+        boxShadow: "0 18px 38px rgba(15, 23, 42, 0.06)",
+      }}
+    >
+      <CardContent sx={{ p: { xs: 3, md: 3.5 } }}>
+        <Stack spacing={2.5}>
+          <Typography variant="h6" fontWeight={800}>
+            Vehicle
+          </Typography>
+
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <SummaryRow
+                icon={<DirectionsCarFilledRoundedIcon fontSize="small" />}
+                label="Class"
+                value={formatVehicleClass(vehicle.vehicleClass)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <SummaryRow
+                icon={<DirectionsCarFilledRoundedIcon fontSize="small" />}
+                label="Brand"
+                value={vehicle.carBrand}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <SummaryRow
+                icon={<DirectionsCarFilledRoundedIcon fontSize="small" />}
+                label="Model"
+                value={vehicle.carModel}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <SummaryRow
+                icon={<InfoRoundedIcon fontSize="small" />}
+                label="Color"
+                value={vehicle.carColor}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <SummaryRow
+                icon={<InfoRoundedIcon fontSize="small" />}
+                label="Plate number"
+                value={vehicle.plateNumber}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <SummaryRow
+                icon={<PersonRoundedIcon fontSize="small" />}
+                label="Seats"
+                value={`${vehicle.seats}`}
+              />
+            </Grid>
+          </Grid>
+        </Stack>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -74,8 +302,8 @@ export default function RideDetailsPage() {
       setError("");
       const response = await getRideById(Number(rideId));
       setRide(response);
-    } catch (error) {
-      setError(getErrorMessage(error, "Failed to load ride details."));
+    } catch (loadError) {
+      setError(getErrorMessage(loadError, "Failed to load ride details."));
     } finally {
       setLoading(false);
     }
@@ -85,11 +313,14 @@ export default function RideDetailsPage() {
     void loadRide();
   }, [loadRide]);
 
+  const isDriver = user?.role === "DRIVER";
   const isAssignedDriver =
-    user?.role === "DRIVER" && !!ride && ride.driverId === user.id;
+    isDriver && !!ride && ride.driverId !== null && ride.driverId === user.id;
+  const isRequestedPreviewForDriver =
+    isDriver && !!ride && ride.status === "REQUESTED" && ride.driverId === null;
 
   const availableActions = useMemo(() => {
-    if (!ride || user?.role !== "DRIVER") {
+    if (!ride || !isDriver) {
       return [];
     }
 
@@ -100,17 +331,17 @@ export default function RideDetailsPage() {
     }> = [];
 
     if (ride.status === "REQUESTED") {
-      actions.push({ key: "accept", label: "Accept ride", variant: "contained" });
+      actions.push({ key: "accept", label: "Accept Ride", variant: "contained" });
     }
 
     if (ride.status === "ACCEPTED" && isAssignedDriver) {
-      actions.push({ key: "start", label: "Start ride", variant: "contained" });
+      actions.push({ key: "start", label: "Start Ride", variant: "contained" });
     }
 
     if (ride.status === "IN_PROGRESS" && isAssignedDriver) {
       actions.push({
         key: "complete",
-        label: "Complete ride",
+        label: "Complete Ride",
         variant: "contained",
       });
     }
@@ -120,11 +351,11 @@ export default function RideDetailsPage() {
       ride.status !== "CANCELLED" &&
       isAssignedDriver
     ) {
-      actions.push({ key: "cancel", label: "Cancel ride", variant: "outlined" });
+      actions.push({ key: "cancel", label: "Cancel Ride", variant: "outlined" });
     }
 
     return actions;
-  }, [isAssignedDriver, ride, user?.role]);
+  }, [isAssignedDriver, isDriver, ride]);
 
   const handleDriverAction = async (
     action: "accept" | "start" | "complete" | "cancel",
@@ -154,14 +385,39 @@ export default function RideDetailsPage() {
       const updatedRide = await actionMap[action](ride.id);
       setRide(updatedRide);
       setSuccess(successMap[action]);
-    } catch (error) {
-      setError(getErrorMessage(error, "Failed to update ride status."));
+    } catch (actionError) {
+      setError(getErrorMessage(actionError, "Failed to update ride status."));
     } finally {
       setActionLoading(null);
     }
   };
 
-  const backPath = user?.role === "DRIVER" ? "/driver/rides" : "/rides";
+  const backPath =
+    isDriver && ride?.status === "REQUESTED" && !isAssignedDriver
+      ? "/driver/rides/available"
+      : isDriver
+        ? "/driver/rides"
+        : "/rides";
+
+  const headlineMessage = useMemo(() => {
+    if (!ride) {
+      return "";
+    }
+
+    if (isRequestedPreviewForDriver) {
+      return "Review the rider and trip summary before deciding whether to accept the request.";
+    }
+
+    if (!isDriver && (!ride.driverInfo || !ride.vehicleInfo)) {
+      return "Driver and vehicle details will appear here as soon as the ride is assigned.";
+    }
+
+    if (ride.status === "COMPLETED") {
+      return "This trip is completed. You can review the final summary and ratings below.";
+    }
+
+    return "A compact overview of the trip, people involved, and the current ride state.";
+  }, [isDriver, isRequestedPreviewForDriver, ride]);
 
   if (loading) {
     return (
@@ -197,147 +453,332 @@ export default function RideDetailsPage() {
 
   return (
     <Stack spacing={3.5}>
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        justifyContent="space-between"
-        spacing={2}
+      <Card
+        sx={{
+          borderRadius: 6,
+          overflow: "hidden",
+          border: "1px solid rgba(148, 163, 184, 0.18)",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.99) 0%, rgba(248,250,252,0.98) 100%)",
+          boxShadow: "0 26px 60px rgba(15, 23, 42, 0.08)",
+        }}
       >
-        <Stack spacing={1}>
-          <Typography variant="h4" fontWeight={700}>
-            Ride #{ride.id}
-          </Typography>
-          <Typography color="text.secondary">
-            Full booking data returned by the backend for this ride request.
-          </Typography>
-        </Stack>
-        <Button variant="outlined" onClick={() => navigate(backPath)}>
-          Back to rides
-        </Button>
-      </Stack>
-
-      {error && <Alert severity="error">{error}</Alert>}
-      {success && <Alert severity="success">{success}</Alert>}
-
-      <RideSummaryCard ride={ride} />
-
-      <RideRatingsCard ride={ride} currentUser={user} />
-
-      {user?.role === "DRIVER" && availableActions.length > 0 && (
-        <Card sx={{ borderRadius: 5 }}>
-          <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-            <Stack spacing={2.5}>
-              <Typography variant="h6" fontWeight={700}>
-                Driver actions
-              </Typography>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                {availableActions.map((action) => (
-                  <Button
-                    key={action.key}
-                    variant={action.variant}
-                    disabled={actionLoading !== null}
-                    onClick={() => void handleDriverAction(action.key)}
-                  >
-                    {actionLoading === action.key ? "Please wait..." : action.label}
-                  </Button>
-                ))}
-              </Stack>
-            </Stack>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card sx={{ borderRadius: 5 }}>
         <CardContent sx={{ p: { xs: 3, md: 4 } }}>
           <Stack spacing={3}>
-            <Typography variant="h6" fontWeight={700}>
-              Full details
-            </Typography>
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              justifyContent="space-between"
+              spacing={2}
+            >
+              <Stack spacing={1.5}>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <IconButton
+                    onClick={() => navigate(backPath)}
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      backgroundColor: "rgba(15, 23, 42, 0.04)",
+                    }}
+                  >
+                    <ArrowBackRoundedIcon />
+                  </IconButton>
+                  <Typography variant="h4" fontWeight={800}>
+                    Ride Details
+                  </Typography>
+                </Stack>
 
-            <Divider />
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.25}
+                  useFlexGap
+                  flexWrap="wrap"
+                  alignItems={{ xs: "flex-start", sm: "center" }}
+                >
+                  <RideStatusChip status={ride.status} />
+                  <Typography color="text.secondary" fontWeight={600}>
+                    Ride ID: #{ride.id}
+                  </Typography>
+                  <Typography color="text.secondary" fontWeight={600}>
+                    Requested: {formatDateTime(ride.createdAt)}
+                  </Typography>
+                </Stack>
 
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <DetailRow
-                  label="Pickup coordinates"
-                  value={`${formatCoordinate(ride.pickupLat)}, ${formatCoordinate(ride.pickupLng)}`}
+                <Typography color="text.secondary" sx={{ maxWidth: 720 }}>
+                  {headlineMessage}
+                </Typography>
+              </Stack>
+
+              {isDriver && availableActions.length > 0 && (
+                <Button
+                  variant="contained"
+                  size="large"
+                  disabled={actionLoading !== null}
+                  onClick={() => void handleDriverAction(availableActions[0].key)}
+                  sx={{
+                    alignSelf: { xs: "stretch", md: "flex-start" },
+                    minWidth: 220,
+                    py: 1.6,
+                    borderRadius: 3,
+                    background:
+                      "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
+                    boxShadow: "0 16px 30px rgba(99, 102, 241, 0.24)",
+                  }}
+                >
+                  {actionLoading === availableActions[0].key
+                    ? "Please wait..."
+                    : availableActions[0].label}
+                </Button>
+              )}
+            </Stack>
+
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                <MetricCard
+                  icon={<DirectionsCarFilledRoundedIcon fontSize="small" />}
+                  label="Vehicle class"
+                  value={formatVehicleClass(ride.vehicleClass)}
+                  accent="#4f46e5"
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <DetailRow
-                  label="Dropoff coordinates"
-                  value={`${formatCoordinate(ride.dropoffLat)}, ${formatCoordinate(ride.dropoffLng)}`}
+              <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                <MetricCard
+                  icon={<PaymentsRoundedIcon fontSize="small" />}
+                  label="Total price"
+                  value={formatMoney(ride.totalPrice, ride.currency)}
+                  accent="#0f766e"
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailRow label="Vehicle class" value={ride.vehicleClass} />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailRow label="Status" value={ride.status} />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailRow
-                  label="Scheduled for"
-                  value={formatDateTime(ride.scheduledFor)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailRow
+              <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                <MetricCard
+                  icon={<RouteRoundedIcon fontSize="small" />}
                   label="Distance"
-                  value={formatDistanceKm(ride.distanceMeters)}
+                  value={formatDistance(ride.distanceMeters)}
+                  accent="#2563eb"
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailRow
+              <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                <MetricCard
+                  icon={<AccessTimeRoundedIcon fontSize="small" />}
                   label="Duration"
                   value={formatDuration(ride.durationSeconds)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailRow
-                  label="Base price"
-                  value={formatPrice(ride.basePrice, ride.currency)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailRow
-                  label="Distance price"
-                  value={formatPrice(ride.distancePrice, ride.currency)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailRow
-                  label="Total price"
-                  value={formatPrice(ride.totalPrice, ride.currency)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailRow label="Currency" value={ride.currency} />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailRow label="Passenger id" value={ride.passengerId} />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailRow
-                  label="Driver id"
-                  value={ride.driverId ?? "Not assigned"}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <DetailRow
-                  label="Created at"
-                  value={formatDateTime(ride.createdAt)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <DetailRow
-                  label="Updated at"
-                  value={formatDateTime(ride.updatedAt)}
+                  accent="#7c3aed"
                 />
               </Grid>
             </Grid>
           </Stack>
         </CardContent>
       </Card>
+
+      {error && <Alert severity="error">{error}</Alert>}
+      {success && <Alert severity="success">{success}</Alert>}
+
+      <Grid container spacing={3} alignItems="stretch">
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Card
+            sx={{
+              borderRadius: 5,
+              height: "100%",
+              border: "1px solid rgba(148, 163, 184, 0.18)",
+              boxShadow: "0 18px 38px rgba(15, 23, 42, 0.06)",
+            }}
+          >
+            <CardContent sx={{ p: { xs: 3, md: 3.5 }, height: "100%" }}>
+              <Stack spacing={2.5}>
+                <Typography variant="h5" fontWeight={800}>
+                  Ride Summary
+                </Typography>
+                <Divider />
+                <Stack spacing={2}>
+                  <SummaryRow
+                    icon={<CalendarMonthRoundedIcon fontSize="small" />}
+                    label="Scheduled for"
+                    value={formatDateTime(ride.scheduledFor)}
+                  />
+                  <SummaryRow
+                    icon={<CalendarMonthRoundedIcon fontSize="small" />}
+                    label="Requested"
+                    value={formatDateTime(ride.createdAt)}
+                  />
+                  <SummaryRow
+                    icon={<AccessTimeRoundedIcon fontSize="small" />}
+                    label="Last updated"
+                    value={formatDateTime(ride.updatedAt)}
+                  />
+                  <SummaryRow
+                    icon={<InfoRoundedIcon fontSize="small" />}
+                    label="Route data"
+                    value="Pickup and drop-off addresses are not available for this ride response."
+                  />
+                </Stack>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Card
+            sx={{
+              borderRadius: 5,
+              height: "100%",
+              border: "1px solid rgba(148, 163, 184, 0.18)",
+              boxShadow: "0 18px 38px rgba(15, 23, 42, 0.06)",
+            }}
+          >
+            <CardContent sx={{ p: { xs: 3, md: 3.5 }, height: "100%" }}>
+              <Stack spacing={2.5} sx={{ height: "100%" }}>
+                <Typography variant="h5" fontWeight={800}>
+                  Trip Context
+                </Typography>
+                <Divider />
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box
+                      sx={{
+                        p: 2.25,
+                        borderRadius: 4,
+                        background:
+                          "linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(255,255,255,1) 100%)",
+                      }}
+                    >
+                      <SummaryRow
+                        icon={<DirectionsCarFilledRoundedIcon fontSize="small" />}
+                        label="Ride type"
+                        value={`${formatVehicleClass(ride.vehicleClass)} trip`}
+                      />
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box
+                      sx={{
+                        p: 2.25,
+                        borderRadius: 4,
+                        background:
+                          "linear-gradient(135deg, rgba(14,165,233,0.08) 0%, rgba(255,255,255,1) 100%)",
+                      }}
+                    >
+                      <SummaryRow
+                        icon={<InfoRoundedIcon fontSize="small" />}
+                        label="Current state"
+                        value={isRequestedPreviewForDriver
+                          ? "Waiting for a driver to accept the request."
+                          : ride.driverInfo
+                            ? "Driver has been assigned to this trip."
+                            : "The trip is pending assignment."}
+                      />
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Box
+                      sx={{
+                        p: 2.5,
+                        borderRadius: 4,
+                        background:
+                          "linear-gradient(135deg, rgba(15,23,42,0.03) 0%, rgba(37,99,235,0.04) 100%)",
+                        border: "1px dashed rgba(148, 163, 184, 0.22)",
+                      }}
+                    >
+                      <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                        <Avatar
+                          sx={{
+                            bgcolor: "rgba(59,130,246,0.12)",
+                            color: "#2563eb",
+                            width: 42,
+                            height: 42,
+                          }}
+                        >
+                          <InfoRoundedIcon />
+                        </Avatar>
+                        <Stack spacing={0.5}>
+                          <Typography fontWeight={800}>What is available here</Typography>
+                          <Typography color="text.secondary">
+                            This screen shows ride status, timing, price, distance,
+                            vehicle class, and rider or driver details. Exact pickup
+                            and drop-off addresses are not part of the current ride
+                            response, so they are intentionally not shown.
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {ride.passengerInfo && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <PersonCard
+              title="Passenger"
+              person={ride.passengerInfo}
+              tone="passenger"
+            />
+          </Grid>
+        )}
+
+        {!isRequestedPreviewForDriver && ride.driverInfo && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <PersonCard title="Driver" person={ride.driverInfo} tone="driver" />
+          </Grid>
+        )}
+
+        {!isRequestedPreviewForDriver && ride.vehicleInfo && (
+          <Grid size={{ xs: 12 }}>
+            <VehicleCard vehicle={ride.vehicleInfo} />
+          </Grid>
+        )}
+
+        {!isRequestedPreviewForDriver &&
+          (!ride.driverInfo || !ride.vehicleInfo) &&
+          !isDriver && (
+            <Grid size={{ xs: 12 }}>
+              <Alert severity="info">Driver not assigned yet.</Alert>
+            </Grid>
+          )}
+
+        {isDriver && availableActions.length > 1 && (
+          <Grid size={{ xs: 12 }}>
+            <Card
+              sx={{
+                borderRadius: 5,
+                border: "1px solid rgba(148, 163, 184, 0.18)",
+                boxShadow: "0 18px 38px rgba(15, 23, 42, 0.06)",
+              }}
+            >
+              <CardContent sx={{ p: { xs: 3, md: 3.5 } }}>
+                <Stack spacing={2}>
+                  <Typography variant="h6" fontWeight={800}>
+                    More actions
+                  </Typography>
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1.5}
+                    useFlexGap
+                    flexWrap="wrap"
+                  >
+                    {availableActions.slice(1).map((action) => (
+                      <Button
+                        key={action.key}
+                        variant={action.variant}
+                        disabled={actionLoading !== null}
+                        onClick={() => void handleDriverAction(action.key)}
+                      >
+                        {actionLoading === action.key ? "Please wait..." : action.label}
+                      </Button>
+                    ))}
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {ride.status === "COMPLETED" && (
+          <Grid size={{ xs: 12 }}>
+            <RideRatingsCard ride={ride} currentUser={user} />
+          </Grid>
+        )}
+      </Grid>
     </Stack>
   );
 }

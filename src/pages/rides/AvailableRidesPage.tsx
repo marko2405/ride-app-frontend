@@ -25,9 +25,11 @@ import { useUser } from "../../context/UserContext";
 import type { RideResponse, RideStatus } from "../../types/ride";
 import {
   formatDateTime,
-  formatDistanceKm,
+  formatDistance,
   formatDuration,
-  formatPrice,
+  formatMoney,
+  formatRating,
+  formatVehicleClass,
 } from "../../utils/rideFormatters";
 
 const getErrorMessage = (error: unknown, fallback: string) => {
@@ -84,7 +86,8 @@ export default function AvailableRidesPage() {
     const matchesSearch =
       normalizedSearch === "" ||
       String(ride.id).includes(normalizedSearch) ||
-      ride.vehicleClass.toLowerCase().includes(normalizedSearch);
+      ride.vehicleClass.toLowerCase().includes(normalizedSearch) ||
+      ride.passengerInfo.fullName.toLowerCase().includes(normalizedSearch);
     const matchesStatus =
       statusFilter === "ALL" || ride.status === statusFilter;
 
@@ -199,14 +202,14 @@ export default function AvailableRidesPage() {
               onSearchChange={setSearchTerm}
               statusValue={statusFilter}
               onStatusChange={setStatusFilter}
-              resultCount={filteredRides.length}
             />
 
             <TableContainer sx={{ overflowX: "auto" }}>
-              <Table sx={{ minWidth: 980 }}>
+              <Table sx={{ minWidth: 1080 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 700 }}>Ride</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Passenger</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Vehicle</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Distance</TableCell>
@@ -239,17 +242,32 @@ export default function AvailableRidesPage() {
                         </Stack>
                       </TableCell>
                       <TableCell>
+                        <Stack spacing={0.35}>
+                          <Typography fontWeight={600}>
+                            {ride.passengerInfo.fullName}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {formatRating(
+                              ride.passengerInfo.averageRating,
+                              ride.passengerInfo.totalRatings,
+                            )}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
                         <RideStatusChip status={ride.status} />
                       </TableCell>
                       <TableCell>
-                        <Typography fontWeight={600}>{ride.vehicleClass}</Typography>
+                        <Typography fontWeight={600}>
+                          {formatVehicleClass(ride.vehicleClass)}
+                        </Typography>
                       </TableCell>
-                      <TableCell>{formatDistanceKm(ride.distanceMeters)}</TableCell>
+                      <TableCell>{formatDistance(ride.distanceMeters)}</TableCell>
                       <TableCell>{formatDuration(ride.durationSeconds)}</TableCell>
                       <TableCell>{formatDateTime(ride.scheduledFor)}</TableCell>
                       <TableCell>
                         <Typography fontWeight={700} color="primary.main">
-                          {formatPrice(ride.totalPrice, ride.currency)}
+                          {formatMoney(ride.totalPrice, ride.currency)}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
@@ -280,7 +298,7 @@ export default function AvailableRidesPage() {
                   ))}
                   {filteredRides.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} sx={{ py: 5, textAlign: "center" }}>
+                      <TableCell colSpan={9} sx={{ py: 5, textAlign: "center" }}>
                         <Stack spacing={0.75} alignItems="center">
                           <Typography fontWeight={700}>No rides match these filters.</Typography>
                           <Typography variant="body2" color="text.secondary">

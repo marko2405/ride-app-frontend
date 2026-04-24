@@ -17,6 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import logoImage from "../assets/logo.png";
 import { useUser } from "../context/UserContext";
 import { clearAuthStorage } from "../utils/auth";
 
@@ -127,16 +128,32 @@ export default function DashboardLayout() {
       >
         <Stack sx={{ height: "100%" }}>
           <Toolbar sx={{ px: 1, minHeight: 88, alignItems: "flex-end" }}>
-            <Stack spacing={0.5}>
-              <Typography variant="h5" fontWeight={800}>
-                Ride
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: "rgba(255,255,255,0.72)" }}
-              >
-                Clean booking flow for everyday rides
-              </Typography>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Box
+                component="img"
+                src={logoImage}
+                alt="Ride App logo"
+                sx={{
+                  width: 42,
+                  height: 42,
+                  objectFit: "contain",
+                  borderRadius: 2,
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                  p: 0.5,
+                  flexShrink: 0,
+                }}
+              />
+              <Stack spacing={0.5}>
+                <Typography variant="h5" fontWeight={800}>
+                  Ride
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "rgba(255,255,255,0.72)" }}
+                >
+                  Clean booking flow for everyday rides
+                </Typography>
+              </Stack>
             </Stack>
           </Toolbar>
 

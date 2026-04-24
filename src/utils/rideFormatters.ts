@@ -1,33 +1,39 @@
-export const formatDistanceKm = (distanceMeters: number) => {
+import type { RideStatus, VehicleClass } from "../types/ride";
+
+export const formatDistance = (distanceMeters: number) => {
   return `${(distanceMeters / 1000).toFixed(2)} km`;
 };
+
+export const formatDistanceKm = formatDistance;
 
 export const formatDuration = (durationSeconds: number) => {
   const hours = Math.floor(durationSeconds / 3600);
   const minutes = Math.floor((durationSeconds % 3600) / 60);
-  const seconds = durationSeconds % 60;
-  const parts = [];
+  const parts: string[] = [];
 
   if (hours > 0) {
     parts.push(`${hours}h`);
   }
 
-  if (minutes > 0 || hours > 0) {
+  if (minutes > 0) {
     parts.push(`${minutes}m`);
   }
 
-  parts.push(`${seconds}s`);
+  if (parts.length === 0) {
+    parts.push("< 1m");
+  }
 
   return parts.join(" ");
 };
 
-export const formatPrice = (amount: number, currency: string) => {
-  return new Intl.NumberFormat("sr-RS", {
-    style: "currency",
-    currency,
+export const formatMoney = (amount: number, currency: string) => {
+  return `${new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount);
+  }).format(amount)} ${currency}`;
 };
+
+export const formatPrice = formatMoney;
 
 export const formatDateTime = (value: string | null) => {
   if (!value) {
@@ -40,9 +46,13 @@ export const formatDateTime = (value: string | null) => {
     return value;
   }
 
-  return new Intl.DateTimeFormat("sr-RS", {
-    dateStyle: "medium",
-    timeStyle: "short",
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
   }).format(date);
 };
 
@@ -56,4 +66,35 @@ export const toScheduledForValue = (value: string) => {
 
 export const formatCoordinate = (value: number) => {
   return value.toFixed(6);
+};
+
+export const formatRating = (averageRating: number, totalRatings: number) => {
+  if (totalRatings === 0) {
+    return "No ratings yet";
+  }
+
+  const label = totalRatings === 1 ? "rating" : "ratings";
+  return `${averageRating.toFixed(1)} (${totalRatings} ${label})`;
+};
+
+const vehicleClassLabels: Record<VehicleClass, string> = {
+  ECONOMIC: "Economic",
+  BUSINESS: "Business",
+  COMFORT: "Comfort",
+};
+
+export const formatVehicleClass = (vehicleClass: VehicleClass) => {
+  return vehicleClassLabels[vehicleClass];
+};
+
+const rideStatusLabels: Record<RideStatus, string> = {
+  REQUESTED: "Requested",
+  ACCEPTED: "Accepted",
+  IN_PROGRESS: "In progress",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+};
+
+export const formatRideStatus = (status: RideStatus) => {
+  return rideStatusLabels[status];
 };

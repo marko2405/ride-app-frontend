@@ -16,7 +16,6 @@ type RidesTableToolbarProps = {
   onSearchChange: (value: string) => void;
   statusValue: RideStatus | "ALL";
   onStatusChange: (value: RideStatus | "ALL") => void;
-  resultCount: number;
 };
 
 const statusOptions: Array<{ value: RideStatus | "ALL"; label: string }> = [
@@ -33,7 +32,6 @@ export default function RidesTableToolbar({
   onSearchChange,
   statusValue,
   onStatusChange,
-  resultCount,
 }: RidesTableToolbarProps) {
   const hasActiveFilters = searchValue.trim() !== "" || statusValue !== "ALL";
 
@@ -59,9 +57,6 @@ export default function RidesTableToolbar({
               Filters
             </Typography>
           </Stack>
-          <Typography variant="body2" color="text.secondary">
-            {resultCount} result{resultCount === 1 ? "" : "s"}
-          </Typography>
         </Stack>
 
         <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>

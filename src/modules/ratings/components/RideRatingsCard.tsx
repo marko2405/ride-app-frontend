@@ -108,23 +108,44 @@ export default function RideRatingsCard({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [forbidden, setForbidden] = useState(false);
 
   const loadRatings = useCallback(async () => {
+    if (ride.status !== "COMPLETED") {
+      setLoading(false);
+      setError("");
+      setForbidden(false);
+      setRatings(emptyRatings);
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
+      setForbidden(false);
       const response = await getRideRatings(ride.id);
       setRatings(response);
     } catch (error) {
-      setError(getErrorMessage(error, "Failed to load ride ratings."));
+      const axiosError = error as AxiosError<{ message?: string }>;
+
+      if (axiosError.response?.status === 403) {
+        setForbidden(true);
+        setError("");
+      } else {
+        setError(getErrorMessage(error, "Failed to load ride ratings."));
+      }
     } finally {
       setLoading(false);
     }
-  }, [ride.id]);
+  }, [ride.id, ride.status]);
 
   useEffect(() => {
     void loadRatings();
   }, [loadRatings]);
+
+  if (ride.status !== "COMPLETED") {
+    return null;
+  }
 
   const canShowRatingForm = useMemo(() => {
     if (!currentUser || ride.status !== "COMPLETED") {
@@ -191,7 +212,13 @@ export default function RideRatingsCard({
             </Alert>
           )}
 
-          {!loading && !error && (
+          {!loading && !error && forbidden && (
+            <Alert severity="info">
+              Ratings are not available for your account on this ride.
+            </Alert>
+          )}
+
+          {!loading && !error && !forbidden && (
             <>
               {success && <Alert severity="success">{success}</Alert>}
 

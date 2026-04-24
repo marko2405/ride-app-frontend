@@ -25,9 +25,11 @@ import { useUser } from "../../context/UserContext";
 import type { RideResponse, RideStatus } from "../../types/ride";
 import {
   formatDateTime,
-  formatDistanceKm,
+  formatDistance,
   formatDuration,
-  formatPrice,
+  formatMoney,
+  formatRating,
+  formatVehicleClass,
 } from "../../utils/rideFormatters";
 
 const getErrorMessage = (error: unknown, fallback: string) => {
@@ -66,7 +68,8 @@ export default function MyRidesPage() {
     const matchesSearch =
       normalizedSearch === "" ||
       String(ride.id).includes(normalizedSearch) ||
-      ride.vehicleClass.toLowerCase().includes(normalizedSearch);
+      ride.vehicleClass.toLowerCase().includes(normalizedSearch) ||
+      ride.driverInfo?.fullName.toLowerCase().includes(normalizedSearch);
     const matchesStatus =
       statusFilter === "ALL" || ride.status === statusFilter;
 
@@ -191,14 +194,14 @@ export default function MyRidesPage() {
               onSearchChange={setSearchTerm}
               statusValue={statusFilter}
               onStatusChange={setStatusFilter}
-              resultCount={filteredRides.length}
             />
 
             <TableContainer sx={{ overflowX: "auto" }}>
-              <Table sx={{ minWidth: 900 }}>
+              <Table sx={{ minWidth: 1040 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 700 }}>Ride</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Driver</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Vehicle</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Distance</TableCell>
@@ -231,17 +234,34 @@ export default function MyRidesPage() {
                         </Stack>
                       </TableCell>
                       <TableCell>
+                        <Stack spacing={0.35}>
+                          <Typography fontWeight={600}>
+                            {ride.driverInfo?.fullName ?? "Waiting for driver"}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {ride.driverInfo
+                              ? formatRating(
+                                  ride.driverInfo.averageRating,
+                                  ride.driverInfo.totalRatings,
+                                )
+                              : "Driver not assigned yet"}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
                         <RideStatusChip status={ride.status} />
                       </TableCell>
                       <TableCell>
-                        <Typography fontWeight={600}>{ride.vehicleClass}</Typography>
+                        <Typography fontWeight={600}>
+                          {formatVehicleClass(ride.vehicleClass)}
+                        </Typography>
                       </TableCell>
-                      <TableCell>{formatDistanceKm(ride.distanceMeters)}</TableCell>
+                      <TableCell>{formatDistance(ride.distanceMeters)}</TableCell>
                       <TableCell>{formatDuration(ride.durationSeconds)}</TableCell>
                       <TableCell>{formatDateTime(ride.scheduledFor)}</TableCell>
                       <TableCell>
                         <Typography fontWeight={700} color="primary.main">
-                          {formatPrice(ride.totalPrice, ride.currency)}
+                          {formatMoney(ride.totalPrice, ride.currency)}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
@@ -256,7 +276,7 @@ export default function MyRidesPage() {
                   ))}
                   {filteredRides.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} sx={{ py: 5, textAlign: "center" }}>
+                      <TableCell colSpan={9} sx={{ py: 5, textAlign: "center" }}>
                         <Stack spacing={0.75} alignItems="center">
                           <Typography fontWeight={700}>No rides match these filters.</Typography>
                           <Typography variant="body2" color="text.secondary">

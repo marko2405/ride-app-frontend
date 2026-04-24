@@ -7,6 +7,22 @@ export type RideStatus =
   | "COMPLETED"
   | "CANCELLED";
 
+export interface RidePersonInfo {
+  id: number;
+  fullName: string;
+  averageRating: number;
+  totalRatings: number;
+}
+
+export interface RideVehicleInfo {
+  vehicleClass: VehicleClass;
+  carBrand: string;
+  carModel: string;
+  carColor: string;
+  plateNumber: string;
+  seats: number;
+}
+
 export interface RideQuoteRequest {
   pickupLat: number;
   pickupLng: number;
@@ -54,6 +70,9 @@ export interface RideResponse {
   scheduledFor: string | null;
   passengerId: number;
   driverId: number | null;
+  passengerInfo: RidePersonInfo;
+  driverInfo: RidePersonInfo | null;
+  vehicleInfo: RideVehicleInfo | null;
   createdAt: string;
   updatedAt: string;
 }

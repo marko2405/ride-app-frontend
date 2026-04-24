@@ -1,11 +1,11 @@
 import { Card, CardContent, Divider, Grid, Stack, Typography } from "@mui/material";
 import type { RideQuoteResponse, RideResponse } from "../../types/ride";
 import {
-  formatCoordinate,
   formatDateTime,
-  formatDistanceKm,
+  formatDistance,
   formatDuration,
-  formatPrice,
+  formatMoney,
+  formatVehicleClass,
 } from "../../utils/rideFormatters";
 import RideStatusChip from "./RideStatusChip";
 
@@ -15,12 +15,10 @@ type RideSummaryCardProps = {
   title?: string;
   pickupAddress?: string;
   dropoffAddress?: string;
-  pickupLat?: number;
-  pickupLng?: number;
-  dropoffLat?: number;
-  dropoffLng?: number;
   selectedVehicleClass?: string | null;
   scheduledFor?: string | null;
+  showStatus?: boolean;
+  showCreated?: boolean;
 };
 
 type SummaryItemProps = {
@@ -45,12 +43,10 @@ export default function RideSummaryCard({
   title = "Ride summary",
   pickupAddress,
   dropoffAddress,
-  pickupLat,
-  pickupLng,
-  dropoffLat,
-  dropoffLng,
   selectedVehicleClass,
   scheduledFor,
+  showStatus = true,
+  showCreated = true,
 }: RideSummaryCardProps) {
   const distanceMeters = ride?.distanceMeters ?? quote?.distanceMeters;
   const durationSeconds = ride?.durationSeconds ?? quote?.durationSeconds;
@@ -69,7 +65,7 @@ export default function RideSummaryCard({
             <Typography variant="h6" fontWeight={700}>
               {title}
             </Typography>
-            {ride && <RideStatusChip status={ride.status} />}
+            {ride && showStatus && <RideStatusChip status={ride.status} />}
           </Stack>
 
           <Divider />
@@ -80,11 +76,7 @@ export default function RideSummaryCard({
                 label="Pickup"
                 value={
                   pickupAddress ??
-                  (pickupLat !== undefined && pickupLng !== undefined
-                    ? `${formatCoordinate(pickupLat)}, ${formatCoordinate(pickupLng)}`
-                    : ride
-                      ? `${formatCoordinate(ride.pickupLat)}, ${formatCoordinate(ride.pickupLng)}`
-                      : "-")
+                  (ride ? "Pickup shared after dispatch" : "-")
                 }
               />
             </Grid>
@@ -93,18 +85,18 @@ export default function RideSummaryCard({
                 label="Dropoff"
                 value={
                   dropoffAddress ??
-                  (dropoffLat !== undefined && dropoffLng !== undefined
-                    ? `${formatCoordinate(dropoffLat)}, ${formatCoordinate(dropoffLng)}`
-                    : ride
-                      ? `${formatCoordinate(ride.dropoffLat)}, ${formatCoordinate(ride.dropoffLng)}`
-                      : "-")
+                  (ride ? "Dropoff shared after dispatch" : "-")
                 }
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <SummaryItem
                 label="Vehicle class"
-                value={ride?.vehicleClass ?? selectedVehicleClass ?? "-"}
+                value={
+                  ride?.vehicleClass
+                    ? formatVehicleClass(ride.vehicleClass)
+                    : selectedVehicleClass ?? "-"
+                }
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -117,7 +109,7 @@ export default function RideSummaryCard({
               <SummaryItem
                 label="Distance"
                 value={
-                  distanceMeters !== undefined ? formatDistanceKm(distanceMeters) : "-"
+                  distanceMeters !== undefined ? formatDistance(distanceMeters) : "-"
                 }
               />
             </Grid>
@@ -133,7 +125,15 @@ export default function RideSummaryCard({
               <Grid size={{ xs: 12, md: 4 }}>
                 <SummaryItem
                   label="Total price"
-                  value={formatPrice(ride.totalPrice, currency)}
+                  value={formatMoney(ride.totalPrice, currency)}
+                />
+              </Grid>
+            )}
+            {ride && showCreated && (
+              <Grid size={{ xs: 12, md: 4 }}>
+                <SummaryItem
+                  label="Created"
+                  value={formatDateTime(ride.createdAt)}
                 />
               </Grid>
             )}

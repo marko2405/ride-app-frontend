@@ -1,5 +1,6 @@
 import { Chip } from "@mui/material";
 import type { RideStatus } from "../../types/ride";
+import { formatRideStatus } from "../../utils/rideFormatters";
 
 type RideStatusChipProps = {
   status: RideStatus;
@@ -19,7 +20,7 @@ const statusColorMap: Record<
 export default function RideStatusChip({ status }: RideStatusChipProps) {
   return (
     <Chip
-      label={status.replace("_", " ")}
+      label={formatRideStatus(status)}
       color={statusColorMap[status]}
       size="small"
       sx={{ fontWeight: 700 }}
