@@ -1,4 +1,11 @@
-import { Card, CardContent, Divider, Grid, Stack, Typography } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  Divider,
+  Grid,
+  Stack,
+  Typography,
+} from "@mui/material";
 import type { RideQuoteResponse, RideResponse } from "../../types/ride";
 import {
   formatDateTime,
@@ -53,7 +60,7 @@ export default function RideSummaryCard({
   const currency = ride?.currency ?? quote?.currency ?? "RSD";
 
   return (
-    <Card sx={{ borderRadius: 5 }}>
+    <Card sx={{ borderRadius: 3 }}>
       <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
         <Stack spacing={3}>
           <Stack
@@ -75,8 +82,7 @@ export default function RideSummaryCard({
               <SummaryItem
                 label="Pickup"
                 value={
-                  pickupAddress ??
-                  (ride ? "Pickup shared after dispatch" : "-")
+                  pickupAddress ?? (ride ? "Pickup shared after dispatch" : "-")
                 }
               />
             </Grid>
@@ -95,21 +101,25 @@ export default function RideSummaryCard({
                 value={
                   ride?.vehicleClass
                     ? formatVehicleClass(ride.vehicleClass)
-                    : selectedVehicleClass ?? "-"
+                    : (selectedVehicleClass ?? "-")
                 }
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <SummaryItem
                 label="Scheduled for"
-                value={formatDateTime(ride?.scheduledFor ?? scheduledFor ?? null)}
+                value={formatDateTime(
+                  ride?.scheduledFor ?? scheduledFor ?? null,
+                )}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <SummaryItem
                 label="Distance"
                 value={
-                  distanceMeters !== undefined ? formatDistance(distanceMeters) : "-"
+                  distanceMeters !== undefined
+                    ? formatDistance(distanceMeters)
+                    : "-"
                 }
               />
             </Grid>
@@ -117,7 +127,9 @@ export default function RideSummaryCard({
               <SummaryItem
                 label="Duration"
                 value={
-                  durationSeconds !== undefined ? formatDuration(durationSeconds) : "-"
+                  durationSeconds !== undefined
+                    ? formatDuration(durationSeconds)
+                    : "-"
                 }
               />
             </Grid>

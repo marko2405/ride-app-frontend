@@ -1,3 +1,4 @@
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import { Alert, Button, Grid, Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
@@ -20,6 +21,14 @@ export default function MyRatingsPage() {
         spacing={2}
       >
         <Stack spacing={1}>
+          <Button
+            variant="text"
+            startIcon={<ArrowBackRoundedIcon />}
+            onClick={() => navigate("/")}
+            sx={{ alignSelf: "flex-start" }}
+          >
+            Back
+          </Button>
           <Typography variant="h4" fontWeight={700}>
             My ratings
           </Typography>
@@ -27,9 +36,6 @@ export default function MyRatingsPage() {
             Review your received ratings and open the related ride details.
           </Typography>
         </Stack>
-        <Button variant="outlined" onClick={() => navigate("/")}>
-          Back to dashboard
-        </Button>
       </Stack>
 
       <Grid container spacing={3}>

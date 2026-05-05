@@ -7,7 +7,6 @@ import PaymentsRoundedIcon from "@mui/icons-material/PaymentsRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import RouteRoundedIcon from "@mui/icons-material/RouteRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
-import { AxiosError } from "axios";
 import {
   Alert,
   Avatar,
@@ -40,6 +39,7 @@ import type {
   RideResponse,
   RideVehicleInfo,
 } from "../../types/ride";
+import { getApiErrorMessage } from "../../utils/apiError";
 import {
   formatDateTime,
   formatDistance,
@@ -48,11 +48,6 @@ import {
   formatRating,
   formatVehicleClass,
 } from "../../utils/rideFormatters";
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  const axiosError = error as AxiosError<{ message?: string }>;
-  return axiosError.response?.data?.message || fallback;
-};
 
 type MetricCardProps = {
   icon: React.ReactNode;
@@ -72,7 +67,7 @@ function MetricCard({ icon, label, value, accent }: MetricCardProps) {
       }}
     >
       <CardContent sx={{ p: 2.5 }}>
-        <Stack spacing={1.5}>
+        <Stack direction="row" spacing={1.5} alignItems="flex-start">
           <Box
             sx={{
               width: 44,
@@ -82,16 +77,19 @@ function MetricCard({ icon, label, value, accent }: MetricCardProps) {
               placeItems: "center",
               backgroundColor: alpha(accent, 0.1),
               color: accent,
+              flexShrink: 0,
             }}
           >
             {icon}
           </Box>
-          <Typography variant="body2" color="text.secondary">
-            {label}
-          </Typography>
-          <Typography variant="h6" fontWeight={800}>
-            {value}
-          </Typography>
+          <Stack spacing={0.75} sx={{ minWidth: 0, pt: 0.35 }}>
+            <Typography variant="body2" color="text.secondary" fontWeight={700}>
+              {label}
+            </Typography>
+            <Typography variant="h6" fontWeight={800}>
+              {value}
+            </Typography>
+          </Stack>
         </Stack>
       </CardContent>
     </Card>
@@ -114,8 +112,8 @@ function SummaryRow({ icon, label, value }: SummaryRowProps) {
           borderRadius: 2.5,
           display: "grid",
           placeItems: "center",
-          backgroundColor: "rgba(99, 102, 241, 0.08)",
-          color: "#4f46e5",
+          backgroundColor: "rgba(250, 204, 21, 0.14)",
+          color: "#b8860b",
           flexShrink: 0,
         }}
       >
@@ -137,80 +135,58 @@ type PersonCardProps = {
   tone: "passenger" | "driver";
 };
 
-function PersonCard({ title, person, tone }: PersonCardProps) {
+function PersonPanel({ title, person, tone }: PersonCardProps) {
   const initials = person.fullName
     .split(" ")
     .map((part) => part[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
-  const accent = tone === "passenger" ? "#7c3aed" : "#2563eb";
+  const accent = tone === "passenger" ? "#d4a017" : "#b8860b";
 
   return (
-    <Card
+    <Box
       sx={{
-        borderRadius: 5,
+        p: 2.25,
+        borderRadius: 4,
         height: "100%",
-        border: "1px solid rgba(148, 163, 184, 0.18)",
-        boxShadow: "0 18px 38px rgba(15, 23, 42, 0.06)",
+        background: `linear-gradient(135deg, ${alpha(accent, 0.09)} 0%, rgba(255,255,255,0.96) 100%)`,
+        border: "1px solid rgba(148, 163, 184, 0.14)",
       }}
     >
-      <CardContent sx={{ p: { xs: 3, md: 3.5 }, height: "100%" }}>
-        <Stack spacing={2.5}>
-          <Typography variant="h6" fontWeight={800}>
-            {title}
-          </Typography>
+      <Stack spacing={1.75}>
+        <Typography variant="subtitle2" fontWeight={800}>
+          {title}
+        </Typography>
 
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar
-              sx={{
-                width: 62,
-                height: 62,
-                bgcolor: alpha(accent, 0.1),
-                color: accent,
-                fontWeight: 800,
-                fontSize: 22,
-              }}
-            >
-              {initials || <PersonRoundedIcon />}
-            </Avatar>
-            <Stack spacing={0.5}>
-              <Typography variant="h5" fontWeight={800}>
-                {person.fullName}
-              </Typography>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <StarRoundedIcon sx={{ color: "#f59e0b", fontSize: 20 }} />
-                <Typography color="text.secondary" fontWeight={600}>
-                  {formatRating(person.averageRating, person.totalRatings)}
-                </Typography>
-              </Stack>
-            </Stack>
-          </Stack>
-
-          <Box
+        <Stack direction="row" spacing={1.75} alignItems="center">
+          <Avatar
             sx={{
-              p: 2.25,
-              borderRadius: 4,
-              background: `linear-gradient(135deg, ${alpha(accent, 0.08)} 0%, rgba(255,255,255,1) 100%)`,
-              border: "1px solid rgba(148, 163, 184, 0.14)",
+              width: 54,
+              height: 54,
+              bgcolor: alpha(accent, 0.12),
+              color: accent,
+              fontWeight: 800,
+              fontSize: 19,
+              flexShrink: 0,
             }}
           >
-            <Stack spacing={1.5}>
-              <SummaryRow
-                icon={<StarRoundedIcon fontSize="small" />}
-                label="Rating summary"
-                value={formatRating(person.averageRating, person.totalRatings)}
-              />
-              <SummaryRow
-                icon={<PersonRoundedIcon fontSize="small" />}
-                label="Total ratings"
-                value={`${person.totalRatings}`}
-              />
+            {initials || <PersonRoundedIcon />}
+          </Avatar>
+          <Stack spacing={0.45} sx={{ minWidth: 0 }}>
+            <Typography variant="h6" fontWeight={800} noWrap>
+              {person.fullName}
+            </Typography>
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              <StarRoundedIcon sx={{ color: "#f59e0b", fontSize: 19 }} />
+              <Typography color="text.secondary" fontWeight={600}>
+                {formatRating(person.averageRating, person.totalRatings)}
+              </Typography>
             </Stack>
-          </Box>
+          </Stack>
         </Stack>
-      </CardContent>
-    </Card>
+      </Stack>
+    </Box>
   );
 }
 
@@ -303,7 +279,7 @@ export default function RideDetailsPage() {
       const response = await getRideById(Number(rideId));
       setRide(response);
     } catch (loadError) {
-      setError(getErrorMessage(loadError, "Failed to load ride details."));
+      setError(getApiErrorMessage(loadError));
     } finally {
       setLoading(false);
     }
@@ -331,7 +307,11 @@ export default function RideDetailsPage() {
     }> = [];
 
     if (ride.status === "REQUESTED") {
-      actions.push({ key: "accept", label: "Accept Ride", variant: "contained" });
+      actions.push({
+        key: "accept",
+        label: "Accept Ride",
+        variant: "contained",
+      });
     }
 
     if (ride.status === "ACCEPTED" && isAssignedDriver) {
@@ -351,7 +331,11 @@ export default function RideDetailsPage() {
       ride.status !== "CANCELLED" &&
       isAssignedDriver
     ) {
-      actions.push({ key: "cancel", label: "Cancel Ride", variant: "outlined" });
+      actions.push({
+        key: "cancel",
+        label: "Cancel Ride",
+        variant: "outlined",
+      });
     }
 
     return actions;
@@ -386,7 +370,7 @@ export default function RideDetailsPage() {
       setRide(updatedRide);
       setSuccess(successMap[action]);
     } catch (actionError) {
-      setError(getErrorMessage(actionError, "Failed to update ride status."));
+      setError(getApiErrorMessage(actionError));
     } finally {
       setActionLoading(null);
     }
@@ -457,10 +441,11 @@ export default function RideDetailsPage() {
         sx={{
           borderRadius: 6,
           overflow: "hidden",
-          border: "1px solid rgba(148, 163, 184, 0.18)",
+          border: "1px solid rgba(184, 134, 11, 0.18)",
           background:
-            "linear-gradient(180deg, rgba(255,255,255,0.99) 0%, rgba(248,250,252,0.98) 100%)",
-          boxShadow: "0 26px 60px rgba(15, 23, 42, 0.08)",
+            "linear-gradient(180deg, #f7d85d 0%, #efc437 48%, #dfa610 100%)",
+          color: "#3a2a06",
+          boxShadow: "0 26px 60px rgba(180, 138, 9, 0.16)",
         }}
       >
         <CardContent sx={{ p: { xs: 3, md: 4 } }}>
@@ -477,7 +462,7 @@ export default function RideDetailsPage() {
                     sx={{
                       width: 48,
                       height: 48,
-                      backgroundColor: "rgba(15, 23, 42, 0.04)",
+                      backgroundColor: "rgba(255,255,255,0.32)",
                     }}
                   >
                     <ArrowBackRoundedIcon />
@@ -495,39 +480,81 @@ export default function RideDetailsPage() {
                   alignItems={{ xs: "flex-start", sm: "center" }}
                 >
                   <RideStatusChip status={ride.status} />
-                  <Typography color="text.secondary" fontWeight={600}>
+                  <Typography
+                    sx={{ color: "rgba(58,42,6,0.82)" }}
+                    fontWeight={600}
+                  >
                     Ride ID: #{ride.id}
                   </Typography>
-                  <Typography color="text.secondary" fontWeight={600}>
+                  <Typography
+                    sx={{ color: "rgba(58,42,6,0.82)" }}
+                    fontWeight={600}
+                  >
                     Requested: {formatDateTime(ride.createdAt)}
                   </Typography>
                 </Stack>
 
-                <Typography color="text.secondary" sx={{ maxWidth: 720 }}>
+                <Typography sx={{ maxWidth: 720, color: "rgba(58,42,6,0.84)" }}>
                   {headlineMessage}
                 </Typography>
               </Stack>
 
               {isDriver && availableActions.length > 0 && (
-                <Button
-                  variant="contained"
-                  size="large"
-                  disabled={actionLoading !== null}
-                  onClick={() => void handleDriverAction(availableActions[0].key)}
+                <Stack
+                  direction={{ xs: "column", sm: "row", md: "column", xl: "row" }}
+                  spacing={1.25}
                   sx={{
                     alignSelf: { xs: "stretch", md: "flex-start" },
-                    minWidth: 220,
-                    py: 1.6,
-                    borderRadius: 3,
-                    background:
-                      "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
-                    boxShadow: "0 16px 30px rgba(99, 102, 241, 0.24)",
+                    alignItems: { xs: "stretch", sm: "flex-start" },
                   }}
                 >
-                  {actionLoading === availableActions[0].key
-                    ? "Please wait..."
-                    : availableActions[0].label}
-                </Button>
+                  {availableActions.map((action) => {
+                    const isCancel = action.key === "cancel";
+
+                    return (
+                      <Button
+                        key={action.key}
+                        variant="contained"
+                        size="large"
+                        disabled={actionLoading !== null}
+                        onClick={() => void handleDriverAction(action.key)}
+                        sx={{
+                          minWidth: 180,
+                          py: 1.25,
+                          px: 2.5,
+                          borderRadius: 999,
+                          background: isCancel
+                            ? "rgba(239, 68, 68, 0.16)"
+                            : "rgba(255,255,255,0.28)",
+                          color: isCancel ? "#7f1d1d" : "#3a2a06",
+                          border: isCancel
+                            ? "1px solid rgba(185, 28, 28, 0.28)"
+                            : "1px solid rgba(58,42,6,0.12)",
+                          boxShadow: isCancel
+                            ? "0 12px 22px rgba(185, 28, 28, 0.12)"
+                            : "0 14px 24px rgba(180, 138, 9, 0.12)",
+                          "&:hover": {
+                            background: isCancel
+                              ? "rgba(239, 68, 68, 0.24)"
+                              : "rgba(255,255,255,0.38)",
+                          },
+                          "&.Mui-disabled": {
+                            background: isCancel
+                              ? "rgba(239, 68, 68, 0.1)"
+                              : "rgba(255,255,255,0.18)",
+                            color: isCancel
+                              ? "rgba(127, 29, 29, 0.46)"
+                              : "rgba(58,42,6,0.46)",
+                          },
+                        }}
+                      >
+                        {actionLoading === action.key
+                          ? "Please wait..."
+                          : action.label}
+                      </Button>
+                    );
+                  })}
+                </Stack>
               )}
             </Stack>
 
@@ -537,7 +564,7 @@ export default function RideDetailsPage() {
                   icon={<DirectionsCarFilledRoundedIcon fontSize="small" />}
                   label="Vehicle class"
                   value={formatVehicleClass(ride.vehicleClass)}
-                  accent="#4f46e5"
+                  accent="#b8860b"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -545,7 +572,7 @@ export default function RideDetailsPage() {
                   icon={<PaymentsRoundedIcon fontSize="small" />}
                   label="Total price"
                   value={formatMoney(ride.totalPrice, ride.currency)}
-                  accent="#0f766e"
+                  accent="#d4a017"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -553,7 +580,7 @@ export default function RideDetailsPage() {
                   icon={<RouteRoundedIcon fontSize="small" />}
                   label="Distance"
                   value={formatDistance(ride.distanceMeters)}
-                  accent="#2563eb"
+                  accent="#c19a08"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -561,7 +588,7 @@ export default function RideDetailsPage() {
                   icon={<AccessTimeRoundedIcon fontSize="small" />}
                   label="Duration"
                   value={formatDuration(ride.durationSeconds)}
-                  accent="#7c3aed"
+                  accent="#a67c00"
                 />
               </Grid>
             </Grid>
@@ -631,17 +658,40 @@ export default function RideDetailsPage() {
                 </Typography>
                 <Divider />
                 <Grid container spacing={2}>
+                  {ride.passengerInfo && (
+                    <Grid size={{ xs: 12, md: ride.driverInfo ? 6 : 12 }}>
+                      <PersonPanel
+                        title="Passenger"
+                        person={ride.passengerInfo}
+                        tone="passenger"
+                      />
+                    </Grid>
+                  )}
+
+                  {!isRequestedPreviewForDriver && ride.driverInfo && (
+                    <Grid size={{ xs: 12, md: ride.passengerInfo ? 6 : 12 }}>
+                      <PersonPanel
+                        title="Driver"
+                        person={ride.driverInfo}
+                        tone="driver"
+                      />
+                    </Grid>
+                  )}
+
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Box
                       sx={{
                         p: 2.25,
                         borderRadius: 4,
                         background:
-                          "linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(255,255,255,1) 100%)",
+                          "linear-gradient(180deg, #f7d85d 0%, #efc437 48%, #dfa610 100%)",
+                        color: "#3a2a06",
                       }}
                     >
                       <SummaryRow
-                        icon={<DirectionsCarFilledRoundedIcon fontSize="small" />}
+                        icon={
+                          <DirectionsCarFilledRoundedIcon fontSize="small" />
+                        }
                         label="Ride type"
                         value={`${formatVehicleClass(ride.vehicleClass)} trip`}
                       />
@@ -653,74 +703,29 @@ export default function RideDetailsPage() {
                         p: 2.25,
                         borderRadius: 4,
                         background:
-                          "linear-gradient(135deg, rgba(14,165,233,0.08) 0%, rgba(255,255,255,1) 100%)",
+                          "linear-gradient(180deg, #f7d85d 0%, #efc437 48%, #dfa610 100%)",
+                        color: "#3a2a06",
                       }}
                     >
                       <SummaryRow
                         icon={<InfoRoundedIcon fontSize="small" />}
                         label="Current state"
-                        value={isRequestedPreviewForDriver
-                          ? "Waiting for a driver to accept the request."
-                          : ride.driverInfo
-                            ? "Driver has been assigned to this trip."
-                            : "The trip is pending assignment."}
+                        value={
+                          isRequestedPreviewForDriver
+                            ? "Waiting for a driver to accept the request."
+                            : ride.driverInfo
+                              ? "Driver has been assigned to this trip."
+                              : "The trip is pending assignment."
+                        }
                       />
                     </Box>
                   </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <Box
-                      sx={{
-                        p: 2.5,
-                        borderRadius: 4,
-                        background:
-                          "linear-gradient(135deg, rgba(15,23,42,0.03) 0%, rgba(37,99,235,0.04) 100%)",
-                        border: "1px dashed rgba(148, 163, 184, 0.22)",
-                      }}
-                    >
-                      <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                        <Avatar
-                          sx={{
-                            bgcolor: "rgba(59,130,246,0.12)",
-                            color: "#2563eb",
-                            width: 42,
-                            height: 42,
-                          }}
-                        >
-                          <InfoRoundedIcon />
-                        </Avatar>
-                        <Stack spacing={0.5}>
-                          <Typography fontWeight={800}>What is available here</Typography>
-                          <Typography color="text.secondary">
-                            This screen shows ride status, timing, price, distance,
-                            vehicle class, and rider or driver details. Exact pickup
-                            and drop-off addresses are not part of the current ride
-                            response, so they are intentionally not shown.
-                          </Typography>
-                        </Stack>
-                      </Stack>
-                    </Box>
-                  </Grid>
+                  <Grid size={{ xs: 12 }}></Grid>
                 </Grid>
               </Stack>
             </CardContent>
           </Card>
         </Grid>
-
-        {ride.passengerInfo && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <PersonCard
-              title="Passenger"
-              person={ride.passengerInfo}
-              tone="passenger"
-            />
-          </Grid>
-        )}
-
-        {!isRequestedPreviewForDriver && ride.driverInfo && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <PersonCard title="Driver" person={ride.driverInfo} tone="driver" />
-          </Grid>
-        )}
 
         {!isRequestedPreviewForDriver && ride.vehicleInfo && (
           <Grid size={{ xs: 12 }}>
@@ -735,43 +740,6 @@ export default function RideDetailsPage() {
               <Alert severity="info">Driver not assigned yet.</Alert>
             </Grid>
           )}
-
-        {isDriver && availableActions.length > 1 && (
-          <Grid size={{ xs: 12 }}>
-            <Card
-              sx={{
-                borderRadius: 5,
-                border: "1px solid rgba(148, 163, 184, 0.18)",
-                boxShadow: "0 18px 38px rgba(15, 23, 42, 0.06)",
-              }}
-            >
-              <CardContent sx={{ p: { xs: 3, md: 3.5 } }}>
-                <Stack spacing={2}>
-                  <Typography variant="h6" fontWeight={800}>
-                    More actions
-                  </Typography>
-                  <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={1.5}
-                    useFlexGap
-                    flexWrap="wrap"
-                  >
-                    {availableActions.slice(1).map((action) => (
-                      <Button
-                        key={action.key}
-                        variant={action.variant}
-                        disabled={actionLoading !== null}
-                        onClick={() => void handleDriverAction(action.key)}
-                      >
-                        {actionLoading === action.key ? "Please wait..." : action.label}
-                      </Button>
-                    ))}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
 
         {ride.status === "COMPLETED" && (
           <Grid size={{ xs: 12 }}>

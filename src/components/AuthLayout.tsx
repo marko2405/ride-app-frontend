@@ -8,6 +8,7 @@ type AuthLayoutProps = {
   subtitle: string;
   children: ReactNode;
   contentMaxWidth?: number;
+  dense?: boolean;
 };
 
 export default function AuthLayout({
@@ -15,15 +16,19 @@ export default function AuthLayout({
   subtitle,
   children,
   contentMaxWidth = 520,
+  dense = false,
 }: AuthLayoutProps) {
   return (
     <Box
       sx={{
         minHeight: "100vh",
         display: "grid",
-        gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+        gridTemplateColumns: {
+          xs: "1fr",
+          md: "minmax(0, 1.12fr) minmax(420px, 0.88fr)",
+        },
         background:
-          "linear-gradient(135deg, #0f1020 0%, #171a35 45%, #1e1b4b 100%)",
+          "radial-gradient(circle at 78% 16%, rgba(255,255,255,0.42), transparent 22%), linear-gradient(135deg, #f9d95b 0%, #f0bf18 52%, #d99b05 100%)",
       }}
     >
       <Box
@@ -33,7 +38,7 @@ export default function AuthLayout({
           alignItems: "center",
           justifyContent: "center",
           overflow: "hidden",
-          p: 4,
+          p: { md: 3, lg: 4 },
         }}
       >
         <Box
@@ -44,8 +49,8 @@ export default function AuthLayout({
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            borderRadius: 6,
-            boxShadow: "0 20px 80px rgba(0,0,0,0.35)",
+            borderRadius: { md: 6, lg: 8 },
+            boxShadow: "0 28px 40px rgba(76, 50, 4, 0.28)",
           }}
         />
 
@@ -54,9 +59,9 @@ export default function AuthLayout({
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(180deg, rgba(15,16,32,0.08) 0%, rgba(15,16,32,0.28) 100%)",
-            borderRadius: 6,
-            m: 4,
+              "linear-gradient(180deg, rgba(80,53,4,0.18) 0%, rgba(63,43,7,0.28) 100%)",
+            borderRadius: { md: 6, lg: 8 },
+            m: { md: 3, lg: 4 },
             pointerEvents: "none",
           }}
         />
@@ -68,39 +73,64 @@ export default function AuthLayout({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          p: { xs: 2, sm: 4, md: 6 },
+          p: { xs: 2.5, sm: 4, md: 4.5, lg: 5.5 },
+          minWidth: 0,
         }}
       >
         <Stack
-          spacing={0.5}
+          spacing={dense ? 0.6 : 1}
           sx={{
             width: "100%",
             maxWidth: contentMaxWidth,
-            mb: 3,
+            mb: dense ? 2 : 3.25,
+            alignItems: "center",
+            textAlign: "center",
           }}
         >
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack
+            direction="row"
+            spacing={1.6}
+            alignItems="center"
+            justifyContent="center"
+            sx={{ minWidth: 0, width: "100%" }}
+          >
             <Box
-              component="img"
-              src={logoImage}
-              alt="Ride App logo"
               sx={{
-                width: 78,
-                height: 78,
-                objectFit: "contain",
-                borderRadius: 2,
-                backgroundColor: "rgba(255,255,255,0.08)",
-                p: 1,
+                width: dense ? 58 : { xs: 66, sm: 78 },
+                height: dense ? 58 : { xs: 66, sm: 78 },
+                borderRadius: 3,
+                display: "grid",
+                placeItems: "center",
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.26), rgba(184,134,11,0.12))",
+                boxShadow:
+                  "inset 0 0 0 1px rgba(58,42,6,0.08), 0 14px 28px rgba(99,64,2,0.12)",
+                flexShrink: 0,
               }}
-            />
+            >
+              <Box
+                component="img"
+                src={logoImage}
+                alt="Ride App logo"
+                sx={{
+                  width: dense ? 50 : { xs: 56, sm: 68 },
+                  height: dense ? 50 : { xs: 56, sm: 68 },
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
+            </Box>
             <Typography
               variant="h2"
               fontWeight={800}
               sx={{
-                color: "white",
-                fontSize: { xs: "2.4rem", sm: "3.25rem" },
+                color: "#111827",
+                fontSize: dense
+                  ? { xs: "2rem", sm: "2.35rem" }
+                  : { xs: "2.55rem", sm: "3.35rem" },
                 lineHeight: 1,
-                letterSpacing: -1.2,
+                letterSpacing: 0,
+                whiteSpace: "nowrap",
               }}
             >
               Ride App
@@ -110,9 +140,10 @@ export default function AuthLayout({
           <Typography
             variant="h6"
             sx={{
-              color: "rgba(255,255,255,0.78)",
+              color: "rgba(17,24,39,0.72)",
               fontWeight: 500,
               maxWidth: 360,
+              fontSize: dense ? "1.03rem" : "1.25rem",
             }}
           >
             Fast rides, simple booking.
@@ -124,19 +155,23 @@ export default function AuthLayout({
           sx={{
             width: "100%",
             maxWidth: contentMaxWidth,
-            p: { xs: 3, sm: 4.5 },
-            borderRadius: 5,
-            background: "rgba(255, 255, 255, 0.96)",
-            backdropFilter: "blur(10px)",
-            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.25)",
+            p: dense ? { xs: 2.5, sm: 3 } : { xs: 3, sm: 4.25 },
+            borderRadius: { xs: 4, sm: 6 },
+            background:
+              "linear-gradient(145deg, rgba(255,253,247,0.96) 0%, rgba(255,250,238,0.92) 100%)",
+            backdropFilter: "blur(14px)",
+            border: "1px solid rgba(255,255,255,0.36)",
+            boxShadow: "0 24px 70px rgba(92, 61, 5, 0.18)",
           }}
         >
           <Typography
             variant="h3"
             fontWeight={700}
             sx={{
-              mb: 1,
-              fontSize: { xs: "2rem", sm: "2.5rem" },
+              mb: 0.75,
+              fontSize: dense
+                ? { xs: "1.8rem", sm: "2.15rem" }
+                : { xs: "2rem", sm: "2.5rem" },
               color: "#111827",
             }}
           >
@@ -146,7 +181,7 @@ export default function AuthLayout({
           <Typography
             variant="body1"
             sx={{
-              mb: 4,
+              mb: dense ? 2 : 4,
               color: "#6b7280",
             }}
           >

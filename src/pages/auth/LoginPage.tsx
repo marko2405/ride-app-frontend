@@ -1,12 +1,34 @@
-import { Alert, Button, Link, Stack, TextField } from "@mui/material";
+import LockRoundedIcon from "@mui/icons-material/LockRounded";
+import MailRoundedIcon from "@mui/icons-material/MailRounded";
+import { Alert, Button, InputAdornment, Link, Stack, TextField } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { AxiosError } from "axios";
 import AuthLayout from "../../components/AuthLayout";
 import PasswordInput from "../../components/PasswordInput";
 import { login, type LoginRequest } from "../../api/auth/auth";
 import { useUser } from "../../context/UserContext";
 import { saveAuthData } from "../../utils/auth";
+import { getApiErrorMessage } from "../../utils/apiError";
+
+const authFieldSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: 3,
+    backgroundColor: "rgba(255,255,255,0.44)",
+    "& fieldset": {
+      borderColor: "rgba(17,24,39,0.16)",
+    },
+    "&:hover fieldset": {
+      borderColor: "rgba(17,24,39,0.26)",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#e3b505",
+      borderWidth: 2,
+    },
+  },
+  "& .MuiInputBase-input": {
+    py: 1.65,
+  },
+};
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -30,12 +52,10 @@ export default function LoginPage() {
       saveAuthData(response);
       setAuthenticatedUser(response);
       void refreshUser();
-      navigate("/");
+      navigate(response.role === "ADMIN" ? "/admin/dashboard" : "/");
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-
       setError("root", {
-        message: axiosError.response?.data?.message || "Login failed.",
+        message: getApiErrorMessage(error),
       });
     }
   };
@@ -51,6 +71,14 @@ export default function LoginPage() {
           <TextField
             label="Email"
             fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <MailRoundedIcon sx={{ color: "rgba(17,24,39,0.48)" }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={authFieldSx}
             {...register("email", {
               required: "Email is required.",
               pattern: {
@@ -65,6 +93,14 @@ export default function LoginPage() {
           <PasswordInput
             label="Password"
             fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockRoundedIcon sx={{ color: "rgba(17,24,39,0.48)" }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={authFieldSx}
             {...register("password", {
               required: "Password is required.",
             })}
@@ -77,7 +113,14 @@ export default function LoginPage() {
             variant="contained"
             size="large"
             disabled={isSubmitting}
-            sx={{ py: 1.4, borderRadius: 2 }}
+            sx={{
+              py: 1.55,
+              borderRadius: 999,
+              mt: 0.5,
+              color: "#111827",
+              background: "linear-gradient(90deg, #e8b900 0%, #d99d00 100%)",
+              boxShadow: "0 16px 34px rgba(181, 125, 0, 0.26)",
+            }}
           >
             {isSubmitting ? "Signing in..." : "Login"}
           </Button>
@@ -87,8 +130,10 @@ export default function LoginPage() {
             to="/register"
             underline="hover"
             textAlign="center"
+            color="#111827"
+            sx={{ "& span": { color: "#d99d00", fontWeight: 700 } }}
           >
-            Don't have an account? Register
+            Don&apos;t have an account? <span>Register</span>
           </Link>
         </Stack>
       </form>

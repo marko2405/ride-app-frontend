@@ -1,5 +1,7 @@
 import { APIProvider } from "@vis.gl/react-google-maps";
-import { AxiosError } from "axios";
+import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import {
   Alert,
   Box,
@@ -8,14 +10,20 @@ import {
   CardContent,
   CircularProgress,
   Grid,
+  InputAdornment,
+  MenuItem,
+  Popover,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { createRide, getRideQuote } from "../../api/rides/rides";
-import LocationInput, { type PlaceSelection } from "../../components/LocationInput";
+import LocationInput, {
+  type PlaceSelection,
+} from "../../components/LocationInput";
 import RideOptionCard from "../../components/rides/RideOptionCard";
 import RideSummaryCard from "../../components/rides/RideSummaryCard";
 import { useUser } from "../../context/UserContext";
@@ -26,6 +34,7 @@ import type {
   RideResponse,
   VehicleClass,
 } from "../../types/ride";
+import { getApiErrorMessage } from "../../utils/apiError";
 import {
   formatDistanceKm,
   formatDuration,
@@ -52,12 +61,9 @@ const defaultValues: RideBookingFormValues = {
   scheduledFor: "",
 };
 
-const getErrorMessage = (error: unknown, fallback: string) => {
-  const axiosError = error as AxiosError<{ message?: string }>;
-  return axiosError.response?.data?.message || fallback;
-};
-
-const mapToQuotePayload = (values: RideBookingFormValues): RideQuoteRequest => ({
+const mapToQuotePayload = (
+  values: RideBookingFormValues,
+): RideQuoteRequest => ({
   pickupLat: Number(values.pickupLat),
   pickupLng: Number(values.pickupLng),
   dropoffLat: Number(values.dropoffLat),
@@ -72,6 +78,236 @@ const mapToCreatePayload = (
   vehicleClass,
   scheduledFor: toScheduledForValue(values.scheduledFor),
 });
+
+const padTimePart = (value: number) => String(value).padStart(2, "0");
+
+const getTodayDateValue = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${padTimePart(now.getMonth() + 1)}-${padTimePart(
+    now.getDate(),
+  )}`;
+};
+
+const parseScheduledValue = (value: string) => {
+  const [date = "", time = ""] = value.split("T");
+  const [hour = "12", minute = "00"] = time.split(":");
+
+  return {
+    date,
+    hour: hour || "12",
+    minute: minute || "00",
+  };
+};
+
+const formatScheduledDisplayValue = (value: string) => {
+  if (!value) {
+    return "";
+  }
+
+  const { date, hour, minute } = parseScheduledValue(value);
+  const [year, month, day] = date.split("-");
+
+  if (!year || !month || !day) {
+    return value;
+  }
+
+  return `${day}.${month}.${year}. ${hour}:${minute}`;
+};
+
+type ScheduledRidePickerProps = {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+};
+
+function ScheduledRidePicker({
+  value,
+  onChange,
+  disabled = false,
+}: ScheduledRidePickerProps) {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const parsedValue = parseScheduledValue(value);
+  const [draftDate, setDraftDate] = useState(parsedValue.date);
+  const [draftHour, setDraftHour] = useState(parsedValue.hour);
+  const [draftMinute, setDraftMinute] = useState(parsedValue.minute);
+  const open = Boolean(anchorEl);
+
+  useEffect(() => {
+    const nextValue = parseScheduledValue(value);
+    setDraftDate(nextValue.date);
+    setDraftHour(nextValue.hour);
+    setDraftMinute(nextValue.minute);
+  }, [value]);
+
+  const handleOpen = (event: MouseEvent<HTMLElement>) => {
+    if (disabled) {
+      return;
+    }
+
+    if (!draftDate) {
+      setDraftDate(getTodayDateValue());
+    }
+
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => setAnchorEl(null);
+
+  const handleApply = () => {
+    if (draftDate) {
+      onChange(`${draftDate}T${draftHour}:${draftMinute}`);
+    }
+
+    handleClose();
+  };
+
+  const handleClear = () => {
+    onChange("");
+    handleClose();
+  };
+
+  return (
+    <Box>
+      <TextField
+        label="Scheduled ride"
+        value={formatScheduledDisplayValue(value)}
+        placeholder="Select pickup date and time"
+        onClick={handleOpen}
+        disabled={disabled}
+        fullWidth
+        InputProps={{
+          readOnly: true,
+          startAdornment: (
+            <InputAdornment position="start">
+              <CalendarMonthRoundedIcon
+                sx={{ color: "primary.main", fontSize: 20 }}
+              />
+            </InputAdornment>
+          ),
+        }}
+        sx={{
+          cursor: "pointer",
+          "& .MuiOutlinedInput-root": {
+            cursor: "pointer",
+            borderRadius: 1,
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)",
+            boxShadow: "0 10px 24px rgba(15, 23, 42, 0.06)",
+            "& fieldset": {
+              borderColor: "rgba(15, 23, 42, 0.12)",
+            },
+            "&:hover": {
+              boxShadow: "0 14px 28px rgba(15, 23, 42, 0.08)",
+            },
+            "&.Mui-focused": {
+              boxShadow: "0 18px 34px rgba(37, 99, 235, 0.16)",
+            },
+          },
+          "& input": {
+            cursor: "pointer",
+          },
+          "& .MuiInputLabel-root": {
+            fontWeight: 600,
+          },
+        }}
+      />
+
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            width: { xs: "calc(100vw - 32px)", sm: 420 },
+            borderRadius: 3,
+            boxShadow: "0 22px 52px rgba(15, 23, 42, 0.18)",
+          },
+        }}
+      >
+        <Stack spacing={2} sx={{ p: 2.5 }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <AccessTimeRoundedIcon sx={{ color: "primary.main" }} />
+            <Typography fontWeight={800}>Choose schedule</Typography>
+          </Stack>
+
+          <Grid container spacing={1.5}>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                label="Date"
+                type="date"
+                value={draftDate}
+                onChange={(event) => setDraftDate(event.target.value)}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid size={{ xs: 6 }}>
+              <TextField
+                select
+                label="Hour"
+                value={draftHour}
+                onChange={(event) => setDraftHour(event.target.value)}
+                fullWidth
+              >
+                {Array.from({ length: 24 }, (_, hour) => padTimePart(hour)).map(
+                  (hour) => (
+                    <MenuItem key={hour} value={hour}>
+                      {hour}
+                    </MenuItem>
+                  ),
+                )}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 6 }}>
+              <TextField
+                select
+                label="Minute"
+                value={draftMinute}
+                onChange={(event) => setDraftMinute(event.target.value)}
+                fullWidth
+              >
+                {Array.from({ length: 60 }, (_, minute) =>
+                  padTimePart(minute),
+                ).map((minute) => (
+                  <MenuItem key={minute} value={minute}>
+                    {minute}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          </Grid>
+
+          <Stack direction="row" spacing={1.25} justifyContent="flex-end">
+            <Button variant="text" onClick={handleClear}>
+              Clear
+            </Button>
+            <Button variant="outlined" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleApply}
+              disabled={!draftDate}
+            >
+              Done
+            </Button>
+          </Stack>
+        </Stack>
+      </Popover>
+
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ mt: 1, display: "block" }}
+      >
+        Leave empty if you want the ride to start immediately.
+      </Typography>
+    </Box>
+  );
+}
 
 function BookingContent() {
   const navigate = useNavigate();
@@ -182,7 +418,7 @@ function BookingContent() {
       setQuote(response);
     } catch (error) {
       setQuote(null);
-      setQuoteError(getErrorMessage(error, "Failed to calculate ride quote."));
+      setQuoteError(getApiErrorMessage(error));
     } finally {
       setIsFetchingQuote(false);
     }
@@ -208,8 +444,9 @@ function BookingContent() {
 
       setCreatedRide(response);
       setSuccessMessage(`Ride #${response.id} has been created successfully.`);
+      navigate(`/rides/${response.id}`);
     } catch (error) {
-      setCreateError(getErrorMessage(error, "Failed to create ride."));
+      setCreateError(getApiErrorMessage(error));
     } finally {
       setIsCreatingRide(false);
     }
@@ -248,21 +485,26 @@ function BookingContent() {
 
   return (
     <Stack spacing={3.5}>
+      <Button
+        variant="text"
+        startIcon={<ArrowBackRoundedIcon />}
+        onClick={() => navigate("/")}
+        sx={{ alignSelf: "flex-start" }}
+      >
+        Back
+      </Button>
       <Card
         sx={{
           borderRadius: 6,
           overflow: "hidden",
           background:
-            "linear-gradient(135deg, #0f172a 0%, #1d4ed8 48%, #312e81 100%)",
-          color: "white",
-          boxShadow: "0 28px 60px rgba(15, 23, 42, 0.16)",
+            "linear-gradient(180deg, #f7d85d 0%, #efc437 48%, #dfa610 100%)",
+          color: "#3a2a06",
+          boxShadow: "0 22px 44px rgba(180, 138, 9, 0.16)",
         }}
       >
-        <CardContent sx={{ p: { xs: 3, md: 4.5 } }}>
-          <Stack spacing={1.5}>
-            <Typography variant="overline" sx={{ opacity: 0.76, letterSpacing: 1.4 }}>
-              Passenger booking
-            </Typography>
+        <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+          <Stack spacing={1}>
             <Typography variant="h4" fontWeight={800}>
               Book a ride
             </Typography>
@@ -277,13 +519,20 @@ function BookingContent() {
       <Card
         sx={{
           borderRadius: 5,
+          maxWidth: 980,
+          width: "100%",
+          mx: "auto",
           background:
-            "linear-gradient(145deg, rgba(255,255,255,0.96) 0%, rgba(245,247,255,0.96) 100%)",
+            "linear-gradient(145deg, rgba(255,255,255,0.98) 0%, rgba(255,250,235,0.98) 100%)",
           boxShadow: "0 22px 50px rgba(15, 23, 42, 0.08)",
         }}
       >
         <CardContent sx={{ p: { xs: 3, md: 4.5 } }}>
-          <Stack spacing={3.5} component="form" onSubmit={handleSubmit(onGetQuote)}>
+          <Stack
+            spacing={3.5}
+            component="form"
+            onSubmit={handleSubmit(onGetQuote)}
+          >
             <Stack spacing={0.75}>
               <Typography variant="h6" fontWeight={700}>
                 Route details
@@ -356,37 +605,11 @@ function BookingContent() {
                   name="scheduledFor"
                   control={control}
                   render={({ field }) => (
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ mb: 1 }}
-                      >
-                        Scheduled ride
-                      </Typography>
-                      <Box
-                        component="input"
-                        type="datetime-local"
-                        value={field.value}
-                        onChange={field.onChange}
-                        disabled={isFetchingQuote || isCreatingRide}
-                        style={{
-                          width: "100%",
-                          padding: "16.5px 14px",
-                          borderRadius: "16px",
-                          border: "1px solid rgba(15, 23, 42, 0.18)",
-                          font: "inherit",
-                          background: "white",
-                        }}
-                      />
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ mt: 1, display: "block" }}
-                      >
-                        Leave empty if you want the ride to start immediately.
-                      </Typography>
-                    </Box>
+                    <ScheduledRidePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={isFetchingQuote || isCreatingRide}
+                    />
                   )}
                 />
               </Grid>
@@ -394,7 +617,9 @@ function BookingContent() {
 
             {quoteError && <Alert severity="error">{quoteError}</Alert>}
             {createError && <Alert severity="error">{createError}</Alert>}
-            {successMessage && <Alert severity="success">{successMessage}</Alert>}
+            {successMessage && (
+              <Alert severity="success">{successMessage}</Alert>
+            )}
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               <Button
@@ -403,7 +628,7 @@ function BookingContent() {
                 size="large"
                 disabled={isFetchingQuote || isCreatingRide}
               >
-                {isFetchingQuote ? "Calculating..." : "Get quote"}
+                {isFetchingQuote ? "Finding..." : "Find Ride Options"}
               </Button>
               <Button
                 type="button"
@@ -438,7 +663,7 @@ function BookingContent() {
         <Stack spacing={3.5}>
           <RideSummaryCard
             quote={quote}
-            title="Quote overview"
+            title="Ride overview"
             pickupAddress={watchedValues.pickupAddress}
             dropoffAddress={watchedValues.dropoffAddress}
             selectedVehicleClass={selectedVehicleClass}
@@ -479,14 +704,6 @@ function BookingContent() {
                     onClick={handleConfirmRide}
                   >
                     {isCreatingRide ? "Booking ride..." : "Confirm ride"}
-                  </Button>
-                  <Button
-                    variant="text"
-                    size="large"
-                    disabled={isCreatingRide}
-                    onClick={() => navigate("/rides")}
-                  >
-                    View my rides
                   </Button>
                 </Stack>
               </Stack>

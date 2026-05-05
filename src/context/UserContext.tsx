@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { AuthResponse } from "../api/auth/auth";
 import { getMyProfile, type UserProfileResponse } from "../api/profile/profile";
+import { getApiErrorMessage } from "../utils/apiError";
 import { getStoredToken, getStoredUser } from "../utils/auth";
 
 export type CurrentUser = Omit<UserProfileResponse, "createdAt"> & {
@@ -56,8 +57,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setError("");
       const res = await getMyProfile();
       setUser(res);
-    } catch {
-      setError("Failed to load profile.");
+    } catch (error) {
+      setError(getApiErrorMessage(error));
     } finally {
       setLoading(false);
     }

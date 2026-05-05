@@ -57,13 +57,10 @@ export default function RideOptionCard({
                 height: 132,
                 borderRadius: 1,
                 overflow: "hidden",
-                border: "1px solid rgba(15, 23, 42, 0.08)",
-                background:
-                  "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                p: 1,
+                p: 0,
               }}
             >
               <Box

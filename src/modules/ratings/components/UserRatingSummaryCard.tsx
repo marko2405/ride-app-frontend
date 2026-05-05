@@ -1,4 +1,3 @@
-import { AxiosError } from "axios";
 import {
   Alert,
   Box,
@@ -15,11 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getUserRatingSummary } from "../services/rating.service";
 import type { UserRatingSummaryResponse } from "../types/rating.types";
 import { formatAverageRating } from "../utils/ratingFormatters";
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  const axiosError = error as AxiosError<{ message?: string }>;
-  return axiosError.response?.data?.message || fallback;
-};
+import { getApiErrorMessage } from "../../../utils/apiError";
 
 type UserRatingSummaryCardProps = {
   userId: number;
@@ -39,7 +34,7 @@ export default function UserRatingSummaryCard({
       const response = await getUserRatingSummary(userId);
       setSummary(response);
     } catch (error) {
-      setError(getErrorMessage(error, "Failed to load rating summary."));
+      setError(getApiErrorMessage(error));
     } finally {
       setLoading(false);
     }

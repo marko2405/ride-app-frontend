@@ -1,3 +1,4 @@
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
 import MailOutlineRoundedIcon from "@mui/icons-material/MailOutlineRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
@@ -18,6 +19,7 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getMyDriverProfile,
   updateMyDriverProfile,
@@ -27,6 +29,7 @@ import {
   type UpdateUserProfileRequest,
 } from "../api/profile/profile";
 import { useUser } from "../context/UserContext";
+import { getApiErrorMessage } from "../utils/apiError";
 import { formatRating } from "../utils/rideFormatters";
 
 type StatCardProps = {
@@ -47,7 +50,7 @@ function StatCard({ label, value, icon, accent }: StatCardProps) {
       }}
     >
       <CardContent sx={{ p: 2.5 }}>
-        <Stack spacing={1.25}>
+        <Stack direction="row" spacing={1.5} alignItems="flex-start">
           <Box
             sx={{
               width: 42,
@@ -57,16 +60,19 @@ function StatCard({ label, value, icon, accent }: StatCardProps) {
               placeItems: "center",
               backgroundColor: alpha(accent, 0.1),
               color: accent,
+              flexShrink: 0,
             }}
           >
             {icon}
           </Box>
-          <Typography variant="body2" color="text.secondary">
-            {label}
-          </Typography>
-          <Typography variant="h6" fontWeight={800}>
-            {value}
-          </Typography>
+          <Stack spacing={0.75} sx={{ minWidth: 0, pt: 0.25 }}>
+            <Typography variant="body2" color="text.secondary" fontWeight={700}>
+              {label}
+            </Typography>
+            <Typography variant="h6" fontWeight={800}>
+              {value}
+            </Typography>
+          </Stack>
         </Stack>
       </CardContent>
     </Card>
@@ -74,6 +80,7 @@ function StatCard({ label, value, icon, accent }: StatCardProps) {
 }
 
 export default function ProfilePage() {
+  const navigate = useNavigate();
   const { user, setUser, refreshUser, loading: userLoading } = useUser();
   const [driverDetails, setDriverDetails] =
     useState<DriverProfileResponse | null>(null);
@@ -126,8 +133,8 @@ export default function ProfilePage() {
           licenseNumber: driverData.licenseNumber ?? "",
           yearsOfExperience: driverData.yearsOfExperience ?? null,
         });
-      } catch {
-        setError("Failed to load driver profile data.");
+      } catch (error) {
+        setError(getApiErrorMessage(error));
       } finally {
         setLoadingDriverDetails(false);
       }
@@ -166,8 +173,8 @@ export default function ProfilePage() {
       setUser(updated);
 
       setSuccess("Profile updated successfully.");
-    } catch {
-      setError("Failed to update profile.");
+    } catch (error) {
+      setError(getApiErrorMessage(error));
     } finally {
       setSavingProfile(false);
     }
@@ -183,8 +190,8 @@ export default function ProfilePage() {
       setDriverDetails(updated);
 
       setSuccess("Driver profile updated successfully.");
-    } catch {
-      setError("Failed to update driver profile.");
+    } catch (error) {
+      setError(getApiErrorMessage(error));
     } finally {
       setSavingDriverProfile(false);
     }
@@ -216,13 +223,21 @@ export default function ProfilePage() {
           borderRadius: 3,
           overflow: "hidden",
           background:
-            "linear-gradient(135deg, #0f172a 0%, #1d4ed8 48%, #0f766e 100%)",
-          color: "white",
-          boxShadow: "0 24px 54px rgba(15, 23, 42, 0.14)",
+            "linear-gradient(180deg, #f7d85d 0%, #efc437 48%, #dfa610 100%)",
+          color: "#3a2a06",
+          boxShadow: "0 22px 46px rgba(180, 138, 9, 0.16)",
         }}
       >
         <CardContent sx={{ p: { xs: 3, md: 4.5 } }}>
           <Stack spacing={1.25}>
+            <Button
+              variant="text"
+              startIcon={<ArrowBackRoundedIcon />}
+              onClick={() => navigate("/")}
+              sx={{ alignSelf: "flex-start", color: "inherit" }}
+            >
+              Back
+            </Button>
             <Typography variant="overline" sx={{ opacity: 0.75, letterSpacing: 1.5 }}>
               {user.role === "DRIVER" ? "Driver profile" : "Account profile"}
             </Typography>
@@ -246,7 +261,7 @@ export default function ProfilePage() {
             label="Account email"
             value={user.email}
             icon={<MailOutlineRoundedIcon fontSize="small" />}
-            accent="#2563eb"
+            accent="#d4a017"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -254,7 +269,7 @@ export default function ProfilePage() {
             label="Username"
             value={user.username}
             icon={<PersonRoundedIcon fontSize="small" />}
-            accent="#7c3aed"
+            accent="#b8860b"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -262,7 +277,7 @@ export default function ProfilePage() {
             label="Role"
             value={user.role}
             icon={<BadgeRoundedIcon fontSize="small" />}
-            accent="#0f766e"
+            accent="#8a6708"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -406,7 +421,7 @@ export default function ProfilePage() {
                             driverDetails?.totalRatings ?? 0,
                           )}
                           icon={<StarRoundedIcon fontSize="small" />}
-                          accent="#f59e0b"
+                          accent="#d4a017"
                         />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6 }}>
@@ -414,7 +429,7 @@ export default function ProfilePage() {
                           label="Driver status"
                           value={driverDetails?.active ? "Active" : "Inactive"}
                           icon={<WorkHistoryRoundedIcon fontSize="small" />}
-                          accent="#0f766e"
+                          accent="#8a6708"
                         />
                       </Grid>
                     </Grid>

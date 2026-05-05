@@ -1,4 +1,3 @@
-import { AxiosError } from "axios";
 import {
   Alert,
   Button,
@@ -24,11 +23,7 @@ import {
   formatRatingDate,
   formatRatingType,
 } from "../utils/ratingFormatters";
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  const axiosError = error as AxiosError<{ message?: string }>;
-  return axiosError.response?.data?.message || fallback;
-};
+import { getApiErrorMessage } from "../../../utils/apiError";
 
 type UserRatingsListProps = {
   userId: number;
@@ -47,7 +42,7 @@ export default function UserRatingsList({ userId }: UserRatingsListProps) {
       const response = await getUserRatings(userId);
       setRatings(response);
     } catch (error) {
-      setError(getErrorMessage(error, "Failed to load ratings."));
+      setError(getApiErrorMessage(error));
     } finally {
       setLoading(false);
     }

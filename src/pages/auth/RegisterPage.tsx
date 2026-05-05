@@ -1,9 +1,19 @@
+import AlternateEmailRoundedIcon from "@mui/icons-material/AlternateEmailRounded";
+import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
+import DirectionsCarRoundedIcon from "@mui/icons-material/DirectionsCarRounded";
+import EventSeatRoundedIcon from "@mui/icons-material/EventSeatRounded";
+import LockRoundedIcon from "@mui/icons-material/LockRounded";
+import MailRoundedIcon from "@mui/icons-material/MailRounded";
+import NumbersRoundedIcon from "@mui/icons-material/NumbersRounded";
+import PaletteRoundedIcon from "@mui/icons-material/PaletteRounded";
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import {
   Alert,
   Box,
   Button,
   Divider,
   Grid,
+  InputAdornment,
   Link,
   MenuItem,
   Stack,
@@ -13,7 +23,6 @@ import {
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { AxiosError } from "axios";
 import AuthLayout from "../../components/AuthLayout";
 import PasswordField from "../../components/PasswordInput";
 import {
@@ -23,12 +32,35 @@ import {
 } from "../../api/auth/auth";
 import { useUser } from "../../context/UserContext";
 import { saveAuthData } from "../../utils/auth";
+import { getApiErrorMessage } from "../../utils/apiError";
 
 const vehicleClassOptions: Array<{ label: string; value: VehicleClass }> = [
   { label: "Economic", value: "ECONOMIC" },
   { label: "Business", value: "BUSINESS" },
   { label: "Comfort", value: "COMFORT" },
 ];
+
+const authFieldSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: 2.25,
+    backgroundColor: "rgba(255,255,255,0.46)",
+    "& fieldset": {
+      borderColor: "rgba(17,24,39,0.15)",
+    },
+    "&:hover fieldset": {
+      borderColor: "rgba(17,24,39,0.25)",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#e3b505",
+      borderWidth: 2,
+    },
+  },
+  "& .MuiInputBase-input": {
+    py: 1.05,
+  },
+};
+
+const iconSx = { color: "rgba(17,24,39,0.48)", fontSize: 20 };
 
 const toOptionalString = (value?: string | null) => {
   const trimmedValue = value?.trim();
@@ -129,10 +161,8 @@ export default function RegisterPage() {
       void refreshUser();
       navigate("/");
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-
       setError("root", {
-        message: axiosError.response?.data?.message || "Registration failed.",
+        message: getApiErrorMessage(error),
       });
     }
   };
@@ -141,19 +171,29 @@ export default function RegisterPage() {
     <AuthLayout
       title="Register"
       subtitle="Create your account"
-      contentMaxWidth={isDriverRegistration ? 760 : 520}
+      contentMaxWidth={isDriverRegistration ? 680 : 520}
+      dense={isDriverRegistration}
     >
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack spacing={2.25}>
+        <Stack spacing={isDriverRegistration ? 1.35 : 2.25}>
           {errors.root?.message && (
             <Alert severity="error">{errors.root.message}</Alert>
           )}
 
-          <Grid container spacing={1.75}>
+          <Grid container spacing={isDriverRegistration ? 1.1 : 1.75}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="First name"
                 fullWidth
+                size={isDriverRegistration ? "small" : "medium"}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonRoundedIcon sx={iconSx} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={authFieldSx}
                 {...register("firstName", {
                   required: "First name is required.",
                   minLength: {
@@ -170,6 +210,15 @@ export default function RegisterPage() {
               <TextField
                 label="Last name"
                 fullWidth
+                size={isDriverRegistration ? "small" : "medium"}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonRoundedIcon sx={iconSx} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={authFieldSx}
                 {...register("lastName", {
                   required: "Last name is required.",
                   minLength: {
@@ -186,6 +235,15 @@ export default function RegisterPage() {
               <TextField
                 label="Email"
                 fullWidth
+                size={isDriverRegistration ? "small" : "medium"}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <MailRoundedIcon sx={iconSx} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={authFieldSx}
                 {...register("email", {
                   required: "Email is required.",
                   pattern: {
@@ -202,6 +260,15 @@ export default function RegisterPage() {
               <TextField
                 label="Username"
                 fullWidth
+                size={isDriverRegistration ? "small" : "medium"}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AlternateEmailRoundedIcon sx={iconSx} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={authFieldSx}
                 {...register("username", {
                   required: "Username is required.",
                   minLength: {
@@ -218,6 +285,15 @@ export default function RegisterPage() {
               <PasswordField
                 label="Password"
                 fullWidth
+                size={isDriverRegistration ? "small" : "medium"}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockRoundedIcon sx={iconSx} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={authFieldSx}
                 {...register("password", {
                   required: "Password is required.",
                   minLength: {
@@ -235,6 +311,15 @@ export default function RegisterPage() {
                 select
                 label="Role"
                 fullWidth
+                size={isDriverRegistration ? "small" : "medium"}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <BadgeRoundedIcon sx={iconSx} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={authFieldSx}
                 {...register("role", {
                   required: "Role is required.",
                 })}
@@ -248,19 +333,28 @@ export default function RegisterPage() {
           </Grid>
 
           {isDriverRegistration && (
-            <Stack spacing={1.75}>
+            <Stack spacing={1.1}>
               <Box>
                 <Typography variant="subtitle2" fontWeight={700}>
                   Driver Information
                 </Typography>
-                <Divider sx={{ mt: 0.75 }} />
+                <Divider sx={{ mt: 0.45 }} />
               </Box>
 
-              <Grid container spacing={1.75}>
+              <Grid container spacing={1.1}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     label="License number"
                     fullWidth
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <BadgeRoundedIcon sx={iconSx} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={authFieldSx}
                     {...register("licenseNumber")}
                     error={!!errors.licenseNumber}
                     helperText={errors.licenseNumber?.message}
@@ -272,7 +366,16 @@ export default function RegisterPage() {
                     label="Years of experience"
                     type="number"
                     fullWidth
+                    size="small"
                     inputProps={{ min: 0 }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <NumbersRoundedIcon sx={iconSx} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={authFieldSx}
                     {...register("yearsOfExperience", {
                       setValueAs: (value) =>
                         value === "" || value === null ? null : Number(value),
@@ -291,15 +394,24 @@ export default function RegisterPage() {
                 <Typography variant="subtitle2" fontWeight={700}>
                   Vehicle Information
                 </Typography>
-                <Divider sx={{ mt: 0.75 }} />
+                <Divider sx={{ mt: 0.45 }} />
               </Box>
 
-              <Grid container spacing={1.75}>
+              <Grid container spacing={1.1}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     select
                     label="Vehicle class"
                     fullWidth
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <DirectionsCarRoundedIcon sx={iconSx} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={authFieldSx}
                     {...register("vehicleClass", {
                       validate: (value) =>
                         selectedRole !== "DRIVER" ||
@@ -322,7 +434,16 @@ export default function RegisterPage() {
                     label="Seats"
                     type="number"
                     fullWidth
+                    size="small"
                     inputProps={{ min: 1 }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EventSeatRoundedIcon sx={iconSx} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={authFieldSx}
                     {...register("seats", {
                       setValueAs: (value) =>
                         value === "" || value === null
@@ -349,6 +470,15 @@ export default function RegisterPage() {
                   <TextField
                     label="Car brand"
                     fullWidth
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <DirectionsCarRoundedIcon sx={iconSx} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={authFieldSx}
                     {...register("carBrand", {
                       validate: (value) =>
                         selectedRole !== "DRIVER" ||
@@ -364,6 +494,15 @@ export default function RegisterPage() {
                   <TextField
                     label="Car model"
                     fullWidth
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <DirectionsCarRoundedIcon sx={iconSx} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={authFieldSx}
                     {...register("carModel", {
                       validate: (value) =>
                         selectedRole !== "DRIVER" ||
@@ -379,6 +518,15 @@ export default function RegisterPage() {
                   <TextField
                     label="Car color"
                     fullWidth
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PaletteRoundedIcon sx={iconSx} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={authFieldSx}
                     {...register("carColor", {
                       validate: (value) =>
                         selectedRole !== "DRIVER" ||
@@ -394,6 +542,15 @@ export default function RegisterPage() {
                   <TextField
                     label="Plate number"
                     fullWidth
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <NumbersRoundedIcon sx={iconSx} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={authFieldSx}
                     {...register("plateNumber", {
                       validate: (value) =>
                         selectedRole !== "DRIVER" ||
@@ -413,7 +570,14 @@ export default function RegisterPage() {
             variant="contained"
             size="large"
             disabled={isSubmitting}
-            sx={{ py: 1.4, borderRadius: 2 }}
+            sx={{
+              py: isDriverRegistration ? 1.05 : 1.45,
+              borderRadius: 999,
+              mt: 0.25,
+              color: "#111827",
+              background: "linear-gradient(90deg, #e8b900 0%, #d99d00 100%)",
+              boxShadow: "0 16px 34px rgba(181, 125, 0, 0.24)",
+            }}
           >
             {isSubmitting ? "Creating account..." : "Register"}
           </Button>
@@ -423,8 +587,10 @@ export default function RegisterPage() {
             to="/login"
             underline="hover"
             textAlign="center"
+            color="#111827"
+            sx={{ "& span": { color: "#d99d00", fontWeight: 700 } }}
           >
-            Already have an account? Login
+            Already have an account? <span>Login</span>
           </Link>
         </Stack>
       </form>

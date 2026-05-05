@@ -1,4 +1,4 @@
-import { AxiosError } from "axios";
+import { isAxiosError } from "axios";
 import {
   Alert,
   Box,
@@ -24,15 +24,11 @@ import {
 import RatingForm from "./RatingForm";
 import type { CurrentUser } from "../../../context/UserContext";
 import type { RideResponse } from "../../../types/ride";
+import { getApiErrorMessage } from "../../../utils/apiError";
 
 const emptyRatings: RideRatingsForRideResponse = {
   passengerToDriverRating: null,
   driverToPassengerRating: null,
-};
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  const axiosError = error as AxiosError<{ message?: string }>;
-  return axiosError.response?.data?.message || fallback;
 };
 
 type RatingRowProps = {
@@ -126,13 +122,11 @@ export default function RideRatingsCard({
       const response = await getRideRatings(ride.id);
       setRatings(response);
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-
-      if (axiosError.response?.status === 403) {
+      if (isAxiosError(error) && error.response?.status === 403) {
         setForbidden(true);
         setError("");
       } else {
-        setError(getErrorMessage(error, "Failed to load ride ratings."));
+        setError(getApiErrorMessage(error));
       }
     } finally {
       setLoading(false);

@@ -1,4 +1,5 @@
-import { AxiosError } from "axios";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import LocalTaxiRoundedIcon from "@mui/icons-material/LocalTaxiRounded";
 import {
   Alert,
   Box,
@@ -23,6 +24,7 @@ import RideStatusChip from "../../components/rides/RideStatusChip";
 import RidesTableToolbar from "../../components/rides/RidesTableToolbar";
 import { useUser } from "../../context/UserContext";
 import type { RideResponse, RideStatus } from "../../types/ride";
+import { getApiErrorMessage } from "../../utils/apiError";
 import {
   formatDateTime,
   formatDistance,
@@ -31,11 +33,6 @@ import {
   formatRating,
   formatVehicleClass,
 } from "../../utils/rideFormatters";
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  const axiosError = error as AxiosError<{ message?: string }>;
-  return axiosError.response?.data?.message || fallback;
-};
 
 export default function MyRidesPage() {
   const navigate = useNavigate();
@@ -53,7 +50,7 @@ export default function MyRidesPage() {
       const response = await getMyRides();
       setRides(response);
     } catch (error) {
-      setError(getErrorMessage(error, "Failed to load rides."));
+      setError(getApiErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -100,6 +97,14 @@ export default function MyRidesPage() {
         spacing={2}
       >
         <Stack spacing={1}>
+          <Button
+            variant="text"
+            startIcon={<ArrowBackRoundedIcon />}
+            onClick={() => navigate("/")}
+            sx={{ alignSelf: "flex-start" }}
+          >
+            Back
+          </Button>
           <Typography variant="h4" fontWeight={700}>
             My rides
           </Typography>
@@ -109,7 +114,22 @@ export default function MyRidesPage() {
           </Typography>
         </Stack>
 
-        <Button variant="contained" onClick={() => navigate("/rides/new")}>
+        <Button
+          variant="contained"
+          startIcon={<LocalTaxiRoundedIcon fontSize="small" />}
+          onClick={() => navigate("/rides/new")}
+          sx={{
+            alignSelf: { xs: "flex-start", sm: "flex-start" },
+            minHeight: 36,
+            px: 2.25,
+            py: 0.65,
+            borderRadius: 999,
+            fontSize: "0.875rem",
+            lineHeight: 1.25,
+            boxShadow: "0 10px 22px rgba(227, 181, 5, 0.2)",
+            whiteSpace: "nowrap",
+          }}
+        >
           Book new ride
         </Button>
       </Stack>

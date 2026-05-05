@@ -1,4 +1,4 @@
-import { AxiosError } from "axios";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import {
   Alert,
   Box,
@@ -23,6 +23,7 @@ import RideStatusChip from "../../components/rides/RideStatusChip";
 import RidesTableToolbar from "../../components/rides/RidesTableToolbar";
 import { useUser } from "../../context/UserContext";
 import type { RideResponse, RideStatus } from "../../types/ride";
+import { getApiErrorMessage } from "../../utils/apiError";
 import {
   formatDateTime,
   formatDistance,
@@ -31,11 +32,6 @@ import {
   formatRating,
   formatVehicleClass,
 } from "../../utils/rideFormatters";
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  const axiosError = error as AxiosError<{ message?: string }>;
-  return axiosError.response?.data?.message || fallback;
-};
 
 export default function AvailableRidesPage() {
   const navigate = useNavigate();
@@ -55,7 +51,7 @@ export default function AvailableRidesPage() {
       const response = await getAvailableRides();
       setRides(response);
     } catch (error) {
-      setError(getErrorMessage(error, "Failed to load available rides."));
+      setError(getApiErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -75,7 +71,7 @@ export default function AvailableRidesPage() {
       setSuccess(`Ride #${ride.id} was accepted successfully.`);
       navigate(`/rides/${ride.id}`);
     } catch (error) {
-      setError(getErrorMessage(error, "Failed to accept ride."));
+      setError(getApiErrorMessage(error));
     } finally {
       setActingRideId(null);
     }
@@ -113,6 +109,14 @@ export default function AvailableRidesPage() {
   return (
     <Stack spacing={3.5}>
       <Stack spacing={1}>
+        <Button
+          variant="text"
+          startIcon={<ArrowBackRoundedIcon />}
+          onClick={() => navigate("/")}
+          sx={{ alignSelf: "flex-start" }}
+        >
+          Back
+        </Button>
         <Typography variant="h4" fontWeight={700}>
           Available rides
         </Typography>

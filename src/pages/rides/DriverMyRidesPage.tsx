@@ -1,4 +1,4 @@
-import { AxiosError } from "axios";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import {
   Alert,
   Box,
@@ -23,6 +23,7 @@ import RideStatusChip from "../../components/rides/RideStatusChip";
 import RidesTableToolbar from "../../components/rides/RidesTableToolbar";
 import { useUser } from "../../context/UserContext";
 import type { RideResponse, RideStatus } from "../../types/ride";
+import { getApiErrorMessage } from "../../utils/apiError";
 import {
   formatDateTime,
   formatDistance,
@@ -31,11 +32,6 @@ import {
   formatRating,
   formatVehicleClass,
 } from "../../utils/rideFormatters";
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  const axiosError = error as AxiosError<{ message?: string }>;
-  return axiosError.response?.data?.message || fallback;
-};
 
 export default function DriverMyRidesPage() {
   const navigate = useNavigate();
@@ -53,7 +49,7 @@ export default function DriverMyRidesPage() {
       const response = await getMyDriverRides();
       setRides(response);
     } catch (error) {
-      setError(getErrorMessage(error, "Failed to load driver rides."));
+      setError(getApiErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -93,8 +89,16 @@ export default function DriverMyRidesPage() {
   return (
     <Stack spacing={3.5}>
       <Stack spacing={1}>
+        <Button
+          variant="text"
+          startIcon={<ArrowBackRoundedIcon />}
+          onClick={() => navigate("/")}
+          sx={{ alignSelf: "flex-start" }}
+        >
+          Back
+        </Button>
         <Typography variant="h4" fontWeight={700}>
-          Driver my rides
+          My rides
         </Typography>
         <Typography color="text.secondary">
           Manage rides assigned to you and open ride details for status updates.

@@ -11,8 +11,8 @@ const statusColorMap: Record<
   "default" | "primary" | "secondary" | "success" | "error" | "warning"
 > = {
   REQUESTED: "warning",
-  ACCEPTED: "primary",
-  IN_PROGRESS: "secondary",
+  ACCEPTED: "warning",
+  IN_PROGRESS: "warning",
   COMPLETED: "success",
   CANCELLED: "error",
 };

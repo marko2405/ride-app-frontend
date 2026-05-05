@@ -1,21 +1,9 @@
-import { AxiosError } from "axios";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
-import {
-  Alert,
-  Box,
-  Button,
-  Rating,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, Rating, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import { createRideRating } from "../services/rating.service";
 import type { RideRatingResponse } from "../types/rating.types";
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  const axiosError = error as AxiosError<{ message?: string }>;
-  return axiosError.response?.data?.message || fallback;
-};
+import { getApiErrorMessage } from "../../../utils/apiError";
 
 type RatingFormProps = {
   rideId: number;
@@ -42,7 +30,7 @@ export default function RatingForm({ rideId, onCreated }: RatingFormProps) {
       setScore(null);
       onCreated(rating);
     } catch (error) {
-      setError(getErrorMessage(error, "Failed to submit rating."));
+      setError(getApiErrorMessage(error));
     } finally {
       setSubmitting(false);
     }
@@ -61,8 +49,7 @@ export default function RatingForm({ rideId, onCreated }: RatingFormProps) {
         <Stack spacing={0.5}>
           <Typography fontWeight={700}>Rate this ride</Typography>
           <Typography variant="body2" color="text.secondary">
-            Choose a score from 1 to 5. The backend will apply the correct
-            passenger or driver rating direction.
+            Choose a score from 1 to 5.
           </Typography>
         </Stack>
 

@@ -135,7 +135,9 @@ export default function RideCard({
       }}
     >
       {onOpen ? (
-        <CardActionArea onClick={() => onOpen(ride.id)}>{content}</CardActionArea>
+        <CardActionArea onClick={() => onOpen(ride.id)}>
+          {content}
+        </CardActionArea>
       ) : (
         content
       )}

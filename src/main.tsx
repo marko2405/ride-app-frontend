@@ -7,15 +7,22 @@ import { UserProvider } from "./context/UserContext";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#1d4ed8",
+      main: "#e3b505",
+      dark: "#c89200",
+      light: "#f6d75d",
+      contrastText: "#2f2200",
     },
     secondary: {
-      main: "#f8fafc",
-      contrastText: "#0f172a",
+      main: "#b8860b",
+      contrastText: "#2f2200",
     },
     background: {
-      default: "#eef2ff",
-      paper: "#ffffff",
+      default: "#fff9ea",
+      paper: "#fffdf7",
+    },
+    text: {
+      primary: "#3a2a06",
+      secondary: "#7c5d10",
     },
   },
   shape: {
@@ -46,12 +53,15 @@ const theme = createTheme({
           fontWeight: 700,
           paddingInline: 18,
         },
+        containedPrimary: {
+          boxShadow: "0 12px 28px rgba(227, 181, 5, 0.26)",
+        },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          boxShadow: "0 20px 45px rgba(15, 23, 42, 0.06)",
+          boxShadow: "0 20px 45px rgba(143, 102, 8, 0.08)",
         },
       },
     },
