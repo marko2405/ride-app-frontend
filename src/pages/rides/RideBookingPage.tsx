@@ -75,6 +75,8 @@ const mapToCreatePayload = (
   vehicleClass: VehicleClass,
 ): CreateRideRequest => ({
   ...mapToQuotePayload(values),
+  pickupAddress: values.pickupAddress.trim(),
+  dropoffAddress: values.dropoffAddress.trim(),
   vehicleClass,
   scheduledFor: toScheduledForValue(values.scheduledFor),
 });
@@ -132,21 +134,15 @@ function ScheduledRidePicker({
   const [draftMinute, setDraftMinute] = useState(parsedValue.minute);
   const open = Boolean(anchorEl);
 
-  useEffect(() => {
-    const nextValue = parseScheduledValue(value);
-    setDraftDate(nextValue.date);
-    setDraftHour(nextValue.hour);
-    setDraftMinute(nextValue.minute);
-  }, [value]);
-
   const handleOpen = (event: MouseEvent<HTMLElement>) => {
     if (disabled) {
       return;
     }
 
-    if (!draftDate) {
-      setDraftDate(getTodayDateValue());
-    }
+    const nextValue = parseScheduledValue(value);
+    setDraftDate(nextValue.date || getTodayDateValue());
+    setDraftHour(nextValue.hour);
+    setDraftMinute(nextValue.minute);
 
     setAnchorEl(event.currentTarget);
   };
@@ -384,14 +380,22 @@ function BookingContent() {
   const validateSelectedLocations = (values: RideBookingFormValues) => {
     let valid = true;
 
-    if (!values.pickupLat || !values.pickupLng) {
+    if (
+      !values.pickupAddress.trim() ||
+      !values.pickupLat ||
+      !values.pickupLng
+    ) {
       setError("pickupAddress", {
         message: "Choose the pickup point from Google suggestions.",
       });
       valid = false;
     }
 
-    if (!values.dropoffLat || !values.dropoffLng) {
+    if (
+      !values.dropoffAddress.trim() ||
+      !values.dropoffLat ||
+      !values.dropoffLng
+    ) {
       setError("dropoffAddress", {
         message: "Choose the dropoff point from Google suggestions.",
       });

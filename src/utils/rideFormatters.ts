@@ -68,6 +68,11 @@ export const formatCoordinate = (value: number) => {
   return value.toFixed(6);
 };
 
+export const formatRideAddress = (address?: string | null) => {
+  const trimmedAddress = address?.trim();
+  return trimmedAddress || "Address unavailable";
+};
+
 export const formatRating = (averageRating: number, totalRatings: number) => {
   if (totalRatings === 0) {
     return "No ratings yet";

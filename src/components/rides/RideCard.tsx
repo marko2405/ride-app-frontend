@@ -12,6 +12,7 @@ import {
   formatDistanceKm,
   formatDuration,
   formatPrice,
+  formatRideAddress,
 } from "../../utils/rideFormatters";
 import RideStatusChip from "./RideStatusChip";
 
@@ -80,6 +81,22 @@ export default function RideCard({
             </Typography>
             <Typography fontWeight={600}>
               {formatDuration(ride.durationSeconds)}
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Typography variant="body2" color="text.secondary">
+              Pickup
+            </Typography>
+            <Typography fontWeight={600}>
+              {formatRideAddress(ride.pickupAddress)}
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Typography variant="body2" color="text.secondary">
+              Dropoff
+            </Typography>
+            <Typography fontWeight={600}>
+              {formatRideAddress(ride.dropoffAddress)}
             </Typography>
           </Grid>
           <Grid size={{ xs: 12 }}>

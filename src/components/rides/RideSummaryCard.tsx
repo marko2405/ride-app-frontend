@@ -12,6 +12,7 @@ import {
   formatDistance,
   formatDuration,
   formatMoney,
+  formatRideAddress,
   formatVehicleClass,
 } from "../../utils/rideFormatters";
 import RideStatusChip from "./RideStatusChip";
@@ -82,7 +83,9 @@ export default function RideSummaryCard({
               <SummaryItem
                 label="Pickup"
                 value={
-                  pickupAddress ?? (ride ? "Pickup shared after dispatch" : "-")
+                  ride
+                    ? formatRideAddress(ride.pickupAddress)
+                    : formatRideAddress(pickupAddress)
                 }
               />
             </Grid>
@@ -90,8 +93,9 @@ export default function RideSummaryCard({
               <SummaryItem
                 label="Dropoff"
                 value={
-                  dropoffAddress ??
-                  (ride ? "Dropoff shared after dispatch" : "-")
+                  ride
+                    ? formatRideAddress(ride.dropoffAddress)
+                    : formatRideAddress(dropoffAddress)
                 }
               />
             </Grid>

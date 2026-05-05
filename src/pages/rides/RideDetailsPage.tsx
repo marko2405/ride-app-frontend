@@ -46,6 +46,7 @@ import {
   formatDuration,
   formatMoney,
   formatRating,
+  formatRideAddress,
   formatVehicleClass,
 } from "../../utils/rideFormatters";
 
@@ -632,9 +633,14 @@ export default function RideDetailsPage() {
                     value={formatDateTime(ride.updatedAt)}
                   />
                   <SummaryRow
-                    icon={<InfoRoundedIcon fontSize="small" />}
-                    label="Route data"
-                    value="Pickup and drop-off addresses are not available for this ride response."
+                    icon={<RouteRoundedIcon fontSize="small" />}
+                    label="Pickup"
+                    value={formatRideAddress(ride.pickupAddress)}
+                  />
+                  <SummaryRow
+                    icon={<RouteRoundedIcon fontSize="small" />}
+                    label="Dropoff"
+                    value={formatRideAddress(ride.dropoffAddress)}
                   />
                 </Stack>
               </Stack>
@@ -743,7 +749,11 @@ export default function RideDetailsPage() {
 
         {ride.status === "COMPLETED" && (
           <Grid size={{ xs: 12 }}>
-            <RideRatingsCard ride={ride} currentUser={user} />
+            <RideRatingsCard
+              ride={ride}
+              currentUser={user}
+              onRatingCreated={loadRide}
+            />
           </Grid>
         )}
       </Grid>

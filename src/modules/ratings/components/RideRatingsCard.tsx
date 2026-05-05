@@ -93,11 +93,13 @@ function RatingRow({ label, rating }: RatingRowProps) {
 type RideRatingsCardProps = {
   ride: RideResponse;
   currentUser: CurrentUser | null;
+  onRatingCreated?: () => Promise<void> | void;
 };
 
 export default function RideRatingsCard({
   ride,
   currentUser,
+  onRatingCreated,
 }: RideRatingsCardProps) {
   const [ratings, setRatings] =
     useState<RideRatingsForRideResponse>(emptyRatings);
@@ -137,10 +139,6 @@ export default function RideRatingsCard({
     void loadRatings();
   }, [loadRatings]);
 
-  if (ride.status !== "COMPLETED") {
-    return null;
-  }
-
   const canShowRatingForm = useMemo(() => {
     if (!currentUser || ride.status !== "COMPLETED") {
       return false;
@@ -165,10 +163,20 @@ export default function RideRatingsCard({
     ride.status,
   ]);
 
-  const handleCreated = () => {
+  const handleCreated = async () => {
     setSuccess("Your rating was submitted successfully.");
-    void loadRatings();
+    await loadRatings();
+    await onRatingCreated?.();
   };
+
+  const alreadyRated =
+    !!currentUser &&
+    ((currentUser.id === ride.passengerId && !!ratings.passengerToDriverRating) ||
+      (currentUser.id === ride.driverId && !!ratings.driverToPassengerRating));
+
+  if (ride.status !== "COMPLETED") {
+    return null;
+  }
 
   return (
     <Card sx={{ borderRadius: 1 }}>
@@ -233,7 +241,9 @@ export default function RideRatingsCard({
                 <RatingForm rideId={ride.id} onCreated={handleCreated} />
               ) : (
                 <Alert severity={ride.status === "COMPLETED" ? "info" : "warning"}>
-                  {ride.status === "COMPLETED"
+                  {alreadyRated
+                    ? "You have already rated this ride"
+                    : ride.status === "COMPLETED"
                     ? "There is no rating action available for your account on this ride."
                     : "This ride must be completed before ratings can be submitted."}
                 </Alert>

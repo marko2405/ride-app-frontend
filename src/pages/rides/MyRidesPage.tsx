@@ -31,6 +31,7 @@ import {
   formatDuration,
   formatMoney,
   formatRating,
+  formatRideAddress,
   formatVehicleClass,
 } from "../../utils/rideFormatters";
 
@@ -66,6 +67,12 @@ export default function MyRidesPage() {
       normalizedSearch === "" ||
       String(ride.id).includes(normalizedSearch) ||
       ride.vehicleClass.toLowerCase().includes(normalizedSearch) ||
+      formatRideAddress(ride.pickupAddress)
+        .toLowerCase()
+        .includes(normalizedSearch) ||
+      formatRideAddress(ride.dropoffAddress)
+        .toLowerCase()
+        .includes(normalizedSearch) ||
       ride.driverInfo?.fullName.toLowerCase().includes(normalizedSearch);
     const matchesStatus =
       statusFilter === "ALL" || ride.status === statusFilter;
@@ -217,10 +224,11 @@ export default function MyRidesPage() {
             />
 
             <TableContainer sx={{ overflowX: "auto" }}>
-              <Table sx={{ minWidth: 1040 }}>
+              <Table sx={{ minWidth: 1240 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 700 }}>Ride</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Route</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Driver</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Vehicle</TableCell>
@@ -250,6 +258,16 @@ export default function MyRidesPage() {
                           <Typography fontWeight={700}>#{ride.id}</Typography>
                           <Typography variant="body2" color="text.secondary">
                             Created {formatDateTime(ride.createdAt)}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell sx={{ maxWidth: 280 }}>
+                        <Stack spacing={0.35}>
+                          <Typography variant="body2" fontWeight={700}>
+                            Pickup: {formatRideAddress(ride.pickupAddress)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Dropoff: {formatRideAddress(ride.dropoffAddress)}
                           </Typography>
                         </Stack>
                       </TableCell>
@@ -296,7 +314,7 @@ export default function MyRidesPage() {
                   ))}
                   {filteredRides.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={9} sx={{ py: 5, textAlign: "center" }}>
+                      <TableCell colSpan={10} sx={{ py: 5, textAlign: "center" }}>
                         <Stack spacing={0.75} alignItems="center">
                           <Typography fontWeight={700}>No rides match these filters.</Typography>
                           <Typography variant="body2" color="text.secondary">

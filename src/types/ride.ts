@@ -49,6 +49,8 @@ export interface CreateRideRequest {
   pickupLng: number;
   dropoffLat: number;
   dropoffLng: number;
+  pickupAddress: string;
+  dropoffAddress: string;
   vehicleClass: VehicleClass;
   scheduledFor: string | null;
 }
@@ -59,6 +61,8 @@ export interface RideResponse {
   pickupLng: number;
   dropoffLat: number;
   dropoffLng: number;
+  pickupAddress?: string | null;
+  dropoffAddress?: string | null;
   vehicleClass: VehicleClass;
   status: RideStatus;
   distanceMeters: number;
