@@ -1,6 +1,7 @@
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import MailRoundedIcon from "@mui/icons-material/MailRounded";
 import { Alert, Button, InputAdornment, Link, Stack, TextField } from "@mui/material";
+import { isAxiosError } from "axios";
 import { useForm } from "react-hook-form";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import AuthLayout from "../../components/AuthLayout";
@@ -8,7 +9,6 @@ import PasswordInput from "../../components/PasswordInput";
 import { login, type LoginRequest } from "../../api/auth/auth";
 import { useUser } from "../../context/UserContext";
 import { saveAuthData } from "../../utils/auth";
-import { getApiErrorMessage } from "../../utils/apiError";
 
 const authFieldSx = {
   "& .MuiOutlinedInput-root": {
@@ -28,6 +28,14 @@ const authFieldSx = {
   "& .MuiInputBase-input": {
     py: 1.65,
   },
+};
+
+const getLoginErrorMessage = (error: unknown) => {
+  if (isAxiosError(error) && error.response?.status === 401) {
+    return "Incorrect email or password.";
+  }
+
+  return "Something went wrong. Please try again.";
 };
 
 export default function LoginPage() {
@@ -55,7 +63,7 @@ export default function LoginPage() {
       navigate(response.role === "ADMIN" ? "/admin/dashboard" : "/");
     } catch (error) {
       setError("root", {
-        message: getApiErrorMessage(error),
+        message: getLoginErrorMessage(error),
       });
     }
   };
