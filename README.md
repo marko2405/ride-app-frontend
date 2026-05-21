@@ -1,30 +1,49 @@
-Ride App
+# 🚖 Ride App Frontend
 
-A ride-booking web application inspired by Uber, built with Spring Boot and React.
+Frontend application for a ride-booking platform built with React and TypeScript.
+Developed as a student final thesis project.
 
-✨ Features
- 
-JWT authentication (User / Driver / Admin roles)
-Ride creation and management
-Driver ride acceptance (based on vehicle class)
-Ratings system (passenger ↔ driver)
-Dashboard for users drivers and admins
+---
 
-🧱 Tech Stack
- 
-Backend: Java, Spring Boot, MySQL
-Frontend: React, TypeScript, MUI
-Other: Google Maps API, JWT Auth
+## 🧱 Tech Stack
 
-🚀 Getting Started
+- React
+- TypeScript
+- Material UI
+- React Router
+- Axios
+- Google Maps API
+- Vite
 
-Backend
+---
 
-cd ride-app-backend
-mvn spring-boot:run
+## 🚀 Getting Started
 
-Frontend
+### 1. Clone repository
 
+```bash
+git clone <frontend-repository-url>
 cd ride-app-frontend
+```
+
+### 2. Install dependencies
+
+```bash
 npm install
+```
+
+### 3. Configure environment variables
+
+Create a `.env` file based on `.env.example`.
+
+### 4. Run the application
+
+```bash
 npm run dev
+```
+
+Frontend will run on:
+
+```text
+http://localhost:5173
+```
